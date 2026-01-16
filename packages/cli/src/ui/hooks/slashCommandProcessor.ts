@@ -41,9 +41,6 @@ import { MessageType } from '../types.js';
 import type { LoadedSettings } from '../../config/settings.js';
 import { type CommandContext, type SlashCommand } from '../commands/types.js';
 import { CommandService } from '../../services/CommandService.js';
-import { BuiltinCommandLoader } from '../../services/BuiltinCommandLoader.js';
-import { FileCommandLoader } from '../../services/FileCommandLoader.js';
-import { McpPromptLoader } from '../../services/McpPromptLoader.js';
 import { parseSlashCommand } from '../../utils/commands.js';
 import {
   type ExtensionUpdateAction,
@@ -78,6 +75,7 @@ interface SlashCommandProcessorActions {
  */
 export const useSlashCommandProcessor = (
   config: Config | null,
+  commandService: CommandService,
   settings: LoadedSettings,
   addItem: UseHistoryManagerReturn['addItem'],
   clearItems: UseHistoryManagerReturn['clearItems'],
@@ -87,19 +85,21 @@ export const useSlashCommandProcessor = (
   setIsProcessing: (isProcessing: boolean) => void,
   actions: SlashCommandProcessorActions,
   extensionsUpdateState: Map<string, ExtensionUpdateStatus>,
-  isConfigInitialized: boolean,
   setBannerVisible: (visible: boolean) => void,
   setCustomDialog: (dialog: React.ReactNode | null) => void,
 ) => {
   const session = useSessionStats();
   const [commands, setCommands] = useState<readonly SlashCommand[] | undefined>(
-    undefined,
+    commandService.getCommands(),
   );
-  const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  const reloadCommands = useCallback(() => {
-    setReloadTrigger((v) => v + 1);
-  }, []);
+  useEffect(() => {
+    setCommands(commandService.getCommands());
+    return commandService.subscribe(() => {
+      setCommands(commandService.getCommands());
+    });
+  }, [commandService]);
+
   const [shellConfirmationRequest, setShellConfirmationRequest] =
     useState<null | {
       commands: string[];
@@ -220,7 +220,7 @@ export const useSlashCommandProcessor = (
         toggleCorgiMode: actions.toggleCorgiMode,
         toggleDebugProfiler: actions.toggleDebugProfiler,
         toggleVimEnabled,
-        reloadCommands,
+        reloadCommands: () => commandService.reloadCommands(),
         extensionsUpdateState,
         dispatchExtensionStateUpdate: actions.dispatchExtensionStateUpdate,
         addConfirmUpdateExtensionRequest:
@@ -247,7 +247,7 @@ export const useSlashCommandProcessor = (
       setPendingItem,
       toggleVimEnabled,
       sessionShellAllowlist,
-      reloadCommands,
+      commandService,
       extensionsUpdateState,
       setBannerVisible,
       setCustomDialog,
@@ -260,7 +260,8 @@ export const useSlashCommandProcessor = (
     }
 
     const listener = () => {
-      reloadCommands();
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      commandService.reloadCommands();
     };
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -269,51 +270,14 @@ export const useSlashCommandProcessor = (
       ideClient.addStatusChangeListener(listener);
     })();
 
-    // TODO: Ideally this would happen more directly inside the ExtensionLoader,
-    // but the CommandService today is not conducive to that since it isn't a
-    // long lived service but instead gets fully re-created based on reload
-    // events within this hook.
-    const extensionEventListener = (
-      _event: ExtensionsStartingEvent | ExtensionsStoppingEvent,
-    ) => {
-      // We only care once at least one extension has completed
-      // starting/stopping
-      reloadCommands();
-    };
-    appEvents.on('extensionsStarting', extensionEventListener);
-    appEvents.on('extensionsStopping', extensionEventListener);
-
     return () => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       (async () => {
         const ideClient = await IdeClient.getInstance();
         ideClient.removeStatusChangeListener(listener);
       })();
-      appEvents.off('extensionsStarting', extensionEventListener);
-      appEvents.off('extensionsStopping', extensionEventListener);
     };
-  }, [config, reloadCommands]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    (async () => {
-      const commandService = await CommandService.create(
-        [
-          new McpPromptLoader(config),
-          new BuiltinCommandLoader(config),
-          new FileCommandLoader(config),
-        ],
-        controller.signal,
-      );
-      setCommands(commandService.getCommands());
-    })();
-
-    return () => {
-      controller.abort();
-    };
-  }, [config, reloadTrigger, isConfigInitialized]);
+  }, [config, commandService]);
 
   const handleSlashCommand = useCallback(
     async (

@@ -74,6 +74,10 @@ import { useEditorSettings } from './hooks/useEditorSettings.js';
 import { useSettingsCommand } from './hooks/useSettingsCommand.js';
 import { useModelCommand } from './hooks/useModelCommand.js';
 import { useSlashCommandProcessor } from './hooks/slashCommandProcessor.js';
+import { CommandService } from '../services/CommandService.js';
+import { McpPromptLoader } from '../services/McpPromptLoader.js';
+import { BuiltinCommandLoader } from '../services/BuiltinCommandLoader.js';
+import { FileCommandLoader } from '../services/FileCommandLoader.js';
 import { useVimMode } from './contexts/VimModeContext.js';
 import { useConsoleMessages } from './hooks/useConsoleMessages.js';
 import { useTerminalSize } from './hooks/useTerminalSize.js';
@@ -212,6 +216,22 @@ export const AppContainer = (props: AppContainerProps) => {
   );
 
   const { bannerText } = useBanner(bannerData, config);
+
+  const commandService = useMemo(
+    () =>
+      new CommandService([
+        new McpPromptLoader(config),
+        new BuiltinCommandLoader(config),
+        new FileCommandLoader(config),
+      ]),
+    [config],
+  );
+
+  useEffect(() => {
+    config.getExtensionLoader().setCommandRegistry(commandService);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    commandService.reloadCommands();
+  }, [config, commandService]);
 
   const extensionManager = config.getExtensionLoader() as ExtensionManager;
   // We are in the interactive CLI, update how we request consent and settings.
@@ -652,6 +672,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
     confirmationRequest,
   } = useSlashCommandProcessor(
     config,
+    commandService,
     settings,
     historyManager.addItem,
     historyManager.clearItems,
@@ -661,7 +682,6 @@ Logging in with Google... Restarting Gemini CLI to continue.
     setIsProcessing,
     slashCommandActions,
     extensionsUpdateStateInternal,
-    isConfigInitialized,
     setBannerVisible,
     setCustomDialog,
   );
