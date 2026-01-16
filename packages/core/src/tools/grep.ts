@@ -522,7 +522,10 @@ class GrepToolInvocation extends BaseToolInvocation<
       const regex = new RegExp(pattern, 'i');
       const allMatches: GrepMatch[] = [];
 
-      for await (const filePath of filesStream) {
+      const CONCURRENCY_LIMIT = 20;
+      const activePromises = new Set<Promise<void>>();
+
+      const processFile = async (filePath: string) => {
         const fileAbsolutePath = filePath;
         try {
           const content = await fsPromises.readFile(fileAbsolutePath, 'utf8');
@@ -548,7 +551,24 @@ class GrepToolInvocation extends BaseToolInvocation<
             );
           }
         }
+      };
+
+      for await (const filePath of filesStream) {
+        // globStream can theoretically return other types, but with our config it returns strings (or paths)
+        // We cast to string to be safe and consistent with previous implementation
+        const pathStr = String(filePath);
+
+        const promise = processFile(pathStr).then(() => {
+          activePromises.delete(promise);
+        });
+        activePromises.add(promise);
+
+        if (activePromises.size >= CONCURRENCY_LIMIT) {
+          await Promise.race(activePromises);
+        }
       }
+
+      await Promise.all(activePromises);
 
       return allMatches;
     } catch (error: unknown) {
