@@ -8,6 +8,13 @@
 import * as fs from 'node:fs';
 import * as util from 'node:util';
 
+export interface ILogger {
+  log(...args: unknown[]): void;
+  warn(...args: unknown[]): void;
+  error(...args: unknown[]): void;
+  debug(...args: unknown[]): void;
+}
+
 /**
  * A simple, centralized logger for developer-facing debug messages.
  *
@@ -20,8 +27,9 @@ import * as util from 'node:util';
  * This is a thin wrapper around the native `console` object. The `ConsolePatcher`
  * will intercept these calls and route them to the debug drawer UI.
  */
-class DebugLogger {
+class DebugLogger implements ILogger {
   private logStream: fs.WriteStream | undefined;
+  private delegate: ILogger | undefined;
 
   constructor() {
     this.logStream = process.env['GEMINI_DEBUG_LOG_FILE']
@@ -36,6 +44,14 @@ class DebugLogger {
     });
   }
 
+  /**
+   * Sets a delegate logger to handle all log calls.
+   * This allows integrating with robust server-side loggers (e.g. winston).
+   */
+  setDelegate(logger: ILogger | undefined) {
+    this.delegate = logger;
+  }
+
   private writeToFile(level: string, args: unknown[]) {
     if (this.logStream) {
       const message = util.format(...args);
@@ -46,23 +62,51 @@ class DebugLogger {
   }
 
   log(...args: unknown[]): void {
-    this.writeToFile('LOG', args);
-    console.log(...args);
+    if (this.delegate) {
+      this.delegate.log(...args);
+    } else {
+      this.writeToFile('LOG', args);
+      console.log(...args);
+    }
   }
 
   warn(...args: unknown[]): void {
-    this.writeToFile('WARN', args);
-    console.warn(...args);
+    if (this.delegate) {
+      this.delegate.warn(...args);
+    } else {
+      this.writeToFile('WARN', args);
+      console.warn(...args);
+    }
   }
 
   error(...args: unknown[]): void {
-    this.writeToFile('ERROR', args);
-    console.error(...args);
+    if (this.delegate) {
+      this.delegate.error(...args);
+    } else {
+      this.writeToFile('ERROR', args);
+      console.error(...args);
+    }
   }
 
   debug(...args: unknown[]): void {
-    this.writeToFile('DEBUG', args);
-    console.debug(...args);
+    if (this.delegate) {
+      this.delegate.debug(...args);
+    } else {
+      this.writeToFile('DEBUG', args);
+      console.debug(...args);
+    }
+  }
+
+  /**
+   * Returns a logger instance that prefixes all messages with the given name.
+   */
+  getLogger(name: string): ILogger {
+    return {
+      log: (...args: unknown[]) => this.log(`[${name}]`, ...args),
+      warn: (...args: unknown[]) => this.warn(`[${name}]`, ...args),
+      error: (...args: unknown[]) => this.error(`[${name}]`, ...args),
+      debug: (...args: unknown[]) => this.debug(`[${name}]`, ...args),
+    };
   }
 }
 
