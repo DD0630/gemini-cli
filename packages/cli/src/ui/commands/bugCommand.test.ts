@@ -61,6 +61,7 @@ describe('bugCommand', () => {
 
   it('should generate the default GitHub issue URL', async () => {
     const mockContext = createMockCommandContext({
+      invocation: { args: 'A test bug' },
       services: {
         config: {
           getModel: () => 'gemini-pro',
@@ -71,7 +72,7 @@ describe('bugCommand', () => {
     });
 
     if (!bugCommand.action) throw new Error('Action is not defined');
-    await bugCommand.action(mockContext, 'A test bug');
+    await bugCommand.action(mockContext);
 
     const expectedInfo = `
 * **CLI Version:** 0.1.0
@@ -97,6 +98,7 @@ describe('bugCommand', () => {
     const customTemplate =
       'https://internal.bug-tracker.com/new?desc={title}&details={info}';
     const mockContext = createMockCommandContext({
+      invocation: { args: 'A custom bug' },
       services: {
         config: {
           getModel: () => 'gemini-pro',
@@ -107,7 +109,7 @@ describe('bugCommand', () => {
     });
 
     if (!bugCommand.action) throw new Error('Action is not defined');
-    await bugCommand.action(mockContext, 'A custom bug');
+    await bugCommand.action(mockContext);
 
     const expectedInfo = `
 * **CLI Version:** 0.1.0

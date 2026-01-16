@@ -52,7 +52,7 @@ describe('skillsCommand', () => {
   });
 
   it('should add a SKILLS_LIST item to UI with descriptions by default', async () => {
-    await skillsCommand.action!(context, '');
+    await skillsCommand.action!(context);
 
     expect(context.ui.addItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -81,7 +81,7 @@ describe('skillsCommand', () => {
 
   it('should list skills when "list" subcommand is used', async () => {
     const listCmd = skillsCommand.subCommands!.find((s) => s.name === 'list')!;
-    await listCmd.action!(context, '');
+    await listCmd.action!(context);
 
     expect(context.ui.addItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -110,7 +110,8 @@ describe('skillsCommand', () => {
 
   it('should disable descriptions if "nodesc" arg is provided to list', async () => {
     const listCmd = skillsCommand.subCommands!.find((s) => s.name === 'list')!;
-    await listCmd.action!(context, 'nodesc');
+    context.invocation!.args = 'nodesc';
+    await listCmd.action!(context);
 
     expect(context.ui.addItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -134,7 +135,8 @@ describe('skillsCommand', () => {
       const disableCmd = skillsCommand.subCommands!.find(
         (s) => s.name === 'disable',
       )!;
-      await disableCmd.action!(context, 'skill1');
+      context.invocation!.args = 'skill1';
+      await disableCmd.action!(context);
 
       expect(context.services.settings.setValue).toHaveBeenCalledWith(
         SettingScope.Workspace,
@@ -155,7 +157,8 @@ describe('skillsCommand', () => {
         (s) => s.name === 'enable',
       )!;
       context.services.settings.merged.skills = { disabled: ['skill1'] };
-      await enableCmd.action!(context, 'skill1');
+      context.invocation!.args = 'skill1';
+      await enableCmd.action!(context);
 
       expect(context.services.settings.setValue).toHaveBeenCalledWith(
         SettingScope.Workspace,
@@ -175,7 +178,8 @@ describe('skillsCommand', () => {
       const disableCmd = skillsCommand.subCommands!.find(
         (s) => s.name === 'disable',
       )!;
-      await disableCmd.action!(context, 'non-existent');
+      context.invocation!.args = 'non-existent';
+      await disableCmd.action!(context);
 
       expect(context.ui.addItem).toHaveBeenCalledWith(
         expect.objectContaining({

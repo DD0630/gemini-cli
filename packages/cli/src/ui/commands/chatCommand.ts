@@ -90,7 +90,8 @@ const saveCommand: SlashCommand = {
     'Save the current conversation as a checkpoint. Usage: /chat save <tag>',
   kind: CommandKind.BUILT_IN,
   autoExecute: false,
-  action: async (context, args): Promise<SlashCommandActionReturn | void> => {
+  action: async (context): Promise<SlashCommandActionReturn | void>  => {
+    const args = context.invocation?.args || '';
     const tag = args.trim();
     if (!tag) {
       return {
@@ -159,7 +160,8 @@ const resumeCommand: SlashCommand = {
     'Resume a conversation from a checkpoint. Usage: /chat resume <tag>',
   kind: CommandKind.BUILT_IN,
   autoExecute: true,
-  action: async (context, args) => {
+  action: async (context) => {
+    const args = context.invocation?.args || '';
     const tag = args.trim();
     if (!tag) {
       return {
@@ -236,7 +238,8 @@ const deleteCommand: SlashCommand = {
   description: 'Delete a conversation checkpoint. Usage: /chat delete <tag>',
   kind: CommandKind.BUILT_IN,
   autoExecute: true,
-  action: async (context, args): Promise<MessageActionReturn> => {
+  action: async (context): Promise<MessageActionReturn>  => {
+    const args = context.invocation?.args || '';
     const tag = args.trim();
     if (!tag) {
       return {
@@ -310,7 +313,8 @@ const shareCommand: SlashCommand = {
     'Share the current conversation to a markdown or json file. Usage: /chat share <file>',
   kind: CommandKind.BUILT_IN,
   autoExecute: false,
-  action: async (context, args): Promise<MessageActionReturn> => {
+  action: async (context): Promise<MessageActionReturn>  => {
+    const args = context.invocation?.args || '';
     let filePathArg = args.trim();
     if (!filePathArg) {
       filePathArg = `gemini-conversation-${Date.now()}.json`;

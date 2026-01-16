@@ -29,10 +29,8 @@ const authCommand: SlashCommand = {
   description: 'Authenticate with an OAuth-enabled MCP server',
   kind: CommandKind.BUILT_IN,
   autoExecute: true,
-  action: async (
-    context: CommandContext,
-    args: string,
-  ): Promise<MessageActionReturn> => {
+  action: async (context: CommandContext): Promise<MessageActionReturn>  => {
+    const args = context.invocation?.args || '';
     const serverName = args.trim();
     const { config } = context.services;
 
@@ -354,7 +352,7 @@ const refreshCommand: SlashCommand = {
     // Reload the slash commands to reflect the changes.
     context.ui.reloadCommands();
 
-    return listCommand.action!(context, '');
+    return listCommand.action!(context);
   },
 };
 

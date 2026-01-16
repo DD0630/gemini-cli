@@ -44,7 +44,7 @@ describe('initCommand', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
 
     // Act: Run the command's action
-    const result = await initCommand.action!(mockContext, '');
+    const result = await initCommand.action!(mockContext);
 
     // Assert: Check for the correct informational message
     expect(result).toEqual({
@@ -94,7 +94,7 @@ describe('initCommand', () => {
     }
 
     // Act: Run the command's action
-    const result = await initCommand.action!(noConfigContext, '');
+    const result = await initCommand.action!(noConfigContext);
 
     // Assert: Check for the correct error message
     expect(result).toEqual({

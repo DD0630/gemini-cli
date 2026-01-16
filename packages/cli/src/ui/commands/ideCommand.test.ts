@@ -112,7 +112,7 @@ describe('ideCommand', () => {
       const command = await ideCommand();
       const result = await command.subCommands!.find(
         (c) => c.name === 'status',
-      )!.action!(mockContext, '');
+      )!.action!(mockContext);
       expect(vi.mocked(mockIdeClient.getConnectionStatus)).toHaveBeenCalled();
       expect(result).toEqual({
         type: 'message',
@@ -128,7 +128,7 @@ describe('ideCommand', () => {
       const command = await ideCommand();
       const result = await command.subCommands!.find(
         (c) => c.name === 'status',
-      )!.action!(mockContext, '');
+      )!.action!(mockContext);
       expect(vi.mocked(mockIdeClient.getConnectionStatus)).toHaveBeenCalled();
       expect(result).toEqual({
         type: 'message',
@@ -143,7 +143,7 @@ describe('ideCommand', () => {
       const command = await ideCommand();
       const result = await command.subCommands!.find(
         (c) => c.name === 'status',
-      )!.action!(mockContext, '');
+      )!.action!(mockContext);
       expect(vi.mocked(mockIdeClient.getConnectionStatus)).toHaveBeenCalled();
       expect(result).toEqual({
         type: 'message',
@@ -161,7 +161,7 @@ describe('ideCommand', () => {
       const command = await ideCommand();
       const result = await command.subCommands!.find(
         (c) => c.name === 'status',
-      )!.action!(mockContext, '');
+      )!.action!(mockContext);
       expect(vi.mocked(mockIdeClient.getConnectionStatus)).toHaveBeenCalled();
       expect(result).toEqual({
         type: 'message',
@@ -202,7 +202,7 @@ describe('ideCommand', () => {
 
       const actionPromise = command.subCommands!.find(
         (c) => c.name === 'install',
-      )!.action!(mockContext, '');
+      )!.action!(mockContext);
       await vi.runAllTimersAsync();
       await actionPromise;
 
@@ -241,7 +241,6 @@ describe('ideCommand', () => {
       const command = await ideCommand();
       await command.subCommands!.find((c) => c.name === 'install')!.action!(
         mockContext,
-        '',
       );
 
       expect(core.getIdeInstaller).toHaveBeenCalledWith(IDE_DEFINITIONS.vscode);

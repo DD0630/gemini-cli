@@ -114,7 +114,7 @@ describe('mcpCommand', () => {
         },
       });
 
-      const result = await mcpCommand.action!(contextWithoutConfig, '');
+      const result = await mcpCommand.action!(contextWithoutConfig);
 
       expect(result).toEqual({
         type: 'message',
@@ -126,7 +126,7 @@ describe('mcpCommand', () => {
     it('should show an error if tool registry is not available', async () => {
       mockConfig.getToolRegistry = vi.fn().mockReturnValue(undefined);
 
-      const result = await mcpCommand.action!(mockContext, '');
+      const result = await mcpCommand.action!(mockContext);
 
       expect(result).toEqual({
         type: 'message',
@@ -201,7 +201,7 @@ describe('mcpCommand', () => {
         ),
       });
 
-      await mcpCommand.action!(mockContext, '');
+      await mcpCommand.action!(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -227,7 +227,7 @@ describe('mcpCommand', () => {
       const descSubCommand = mcpCommand.subCommands!.find(
         (c) => c.name === 'desc',
       );
-      await descSubCommand!.action!(mockContext, '');
+      await descSubCommand!.action!(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -242,7 +242,7 @@ describe('mcpCommand', () => {
       const listSubCommand = mcpCommand.subCommands!.find(
         (c) => c.name === 'list',
       );
-      await listSubCommand!.action!(mockContext, '');
+      await listSubCommand!.action!(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         expect.objectContaining({

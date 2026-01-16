@@ -89,7 +89,7 @@ describe('restoreCommand', () => {
       ).mockReturnValue('');
 
       expect(
-        await restoreCommand(mockConfig)?.action?.(mockContext, ''),
+        await restoreCommand(mockConfig)?.action?.(mockContext),
       ).toEqual({
         type: 'message',
         messageType: 'error',
@@ -102,7 +102,7 @@ describe('restoreCommand', () => {
       await fs.rm(checkpointsDir, { recursive: true, force: true });
       const command = restoreCommand(mockConfig);
 
-      expect(await command?.action?.(mockContext, '')).toEqual({
+      expect(await command?.action?.(mockContext)).toEqual({
         type: 'message',
         messageType: 'info',
         content: 'No restorable tool calls found.',
@@ -116,7 +116,7 @@ describe('restoreCommand', () => {
       await fs.writeFile(path.join(checkpointsDir, 'test2.json'), '{}');
       const command = restoreCommand(mockConfig);
 
-      expect(await command?.action?.(mockContext, '')).toEqual({
+      expect(await command?.action?.(mockContext)).toEqual({
         type: 'message',
         messageType: 'info',
         content: 'Available tool calls to restore:\n\ntest1\ntest2',
@@ -127,7 +127,8 @@ describe('restoreCommand', () => {
       await fs.writeFile(path.join(checkpointsDir, 'test1.json'), '{}');
       const command = restoreCommand(mockConfig);
 
-      expect(await command?.action?.(mockContext, 'test2')).toEqual({
+      mockContext.invocation!.args = 'test2';
+      expect(await command?.action?.(mockContext)).toEqual({
         type: 'message',
         messageType: 'error',
         content: 'File not found: test2.json',
@@ -144,7 +145,8 @@ describe('restoreCommand', () => {
       await fs.mkdir(checkpointPath);
       const command = restoreCommand(mockConfig);
 
-      expect(await command?.action?.(mockContext, checkpointName)).toEqual({
+      mockContext.invocation!.args = checkpointName;
+      expect(await command?.action?.(mockContext)).toEqual({
         type: 'message',
         messageType: 'error',
         content: expect.stringContaining(
@@ -166,7 +168,8 @@ describe('restoreCommand', () => {
       );
       const command = restoreCommand(mockConfig);
 
-      expect(await command?.action?.(mockContext, 'my-checkpoint')).toEqual({
+      mockContext.invocation!.args = 'my-checkpoint';
+      expect(await command?.action?.(mockContext)).toEqual({
         type: 'tool',
         toolName: 'run_shell_command',
         toolArgs: { command: 'ls' },
@@ -198,7 +201,8 @@ describe('restoreCommand', () => {
 
       const command = restoreCommand(mockConfig);
 
-      expect(await command?.action?.(mockContext, 'my-checkpoint')).toEqual({
+      mockContext.invocation!.args = 'my-checkpoint';
+      expect(await command?.action?.(mockContext)).toEqual({
         type: 'tool',
         toolName: 'run_shell_command',
         toolArgs: { command: 'ls' },
@@ -218,7 +222,8 @@ describe('restoreCommand', () => {
     );
     const command = restoreCommand(mockConfig);
 
-    expect(await command?.action?.(mockContext, checkpointName)).toEqual({
+      mockContext.invocation!.args = checkpointName;
+      expect(await command?.action?.(mockContext)).toEqual({
       type: 'message',
       messageType: 'error',
       // A more specific error message would be ideal, but for now, we can assert the current behavior.

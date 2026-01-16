@@ -15,8 +15,8 @@ import { SettingScope } from '../../config/settings.js';
 
 async function listAction(
   context: CommandContext,
-  args: string,
 ): Promise<void | SlashCommandActionReturn> {
+  const args = context.invocation?.args || '';
   const subCommand = args.trim();
 
   // Default to SHOWING descriptions. The user can hide them with 'nodesc'.
@@ -56,8 +56,8 @@ async function listAction(
 
 async function disableAction(
   context: CommandContext,
-  args: string,
 ): Promise<void | SlashCommandActionReturn> {
+  const args = context.invocation?.args || '';
   const skillName = args.trim();
   if (!skillName) {
     context.ui.addItem(
@@ -112,8 +112,8 @@ async function disableAction(
 
 async function enableAction(
   context: CommandContext,
-  args: string,
 ): Promise<void | SlashCommandActionReturn> {
+  const args = context.invocation?.args || '';
   const skillName = args.trim();
   if (!skillName) {
     context.ui.addItem(

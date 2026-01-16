@@ -18,7 +18,7 @@ const authLoginCommand: SlashCommand = {
   description: 'Login or change the auth method',
   kind: CommandKind.BUILT_IN,
   autoExecute: true,
-  action: (_context, _args): OpenDialogActionReturn => ({
+  action: (_context): OpenDialogActionReturn  => ({
     type: 'dialog',
     dialog: 'auth',
   }),
@@ -28,7 +28,8 @@ const authLogoutCommand: SlashCommand = {
   name: 'logout',
   description: 'Log out and clear all cached credentials',
   kind: CommandKind.BUILT_IN,
-  action: async (context, _args): Promise<LogoutActionReturn> => {
+  action: async (context): Promise<LogoutActionReturn>  => {
+    const _args = context.invocation?.args || '';
     await clearCachedCredentialFile();
     // Clear the selected auth type so user sees the auth selection menu
     context.services.settings.setValue(
@@ -50,7 +51,7 @@ export const authCommand: SlashCommand = {
   description: 'Manage authentication',
   kind: CommandKind.BUILT_IN,
   subCommands: [authLoginCommand, authLogoutCommand],
-  action: (context, args) =>
+  action: (context) =>
     // Default to login if no subcommand is provided
     authLoginCommand.action!(context, args),
 };

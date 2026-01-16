@@ -214,7 +214,7 @@ describe('setupGithubCommand', async () => {
     });
 
     await expect(
-      setupGithubCommand.action?.({} as CommandContext, ''),
+      setupGithubCommand.action?.({} as CommandContext),
     ).rejects.toThrow(/Invalid response code downloading.*404 - Not Found/);
   });
 });

@@ -55,7 +55,8 @@ describe('permissionsCommand', () => {
     const trustCommand = permissionsCommand.subCommands?.find(
       (cmd) => cmd.name === 'trust',
     );
-    const actionResult = trustCommand?.action?.(mockContext, '/test/dir');
+    mockContext.invocation!.args = '/test/dir';
+    const actionResult = trustCommand?.action?.(mockContext);
     expect(actionResult).toEqual({
       type: 'dialog',
       dialog: 'permissions',
@@ -69,7 +70,7 @@ describe('permissionsCommand', () => {
     const trustCommand = permissionsCommand.subCommands?.find(
       (cmd) => cmd.name === 'trust',
     );
-    const actionResult = trustCommand?.action?.(mockContext, '');
+    const actionResult = trustCommand?.action?.(mockContext);
     expect(actionResult).toEqual({
       type: 'dialog',
       dialog: 'permissions',
@@ -86,10 +87,8 @@ describe('permissionsCommand', () => {
     vi.mocked(fs).statSync.mockImplementation(() => {
       throw new Error('ENOENT: no such file or directory');
     });
-    const actionResult = trustCommand?.action?.(
-      mockContext,
-      '/nonexistent/dir',
-    );
+    mockContext.invocation!.args = '/nonexistent/dir';
+    const actionResult = trustCommand?.action?.(mockContext);
     expect(actionResult).toEqual({
       type: 'message',
       messageType: 'error',
@@ -106,7 +105,8 @@ describe('permissionsCommand', () => {
     vi.mocked(fs).statSync.mockReturnValue({
       isDirectory: vi.fn(() => false),
     } as unknown as fs.Stats);
-    const actionResult = trustCommand?.action?.(mockContext, '/file/not/dir');
+    mockContext.invocation!.args = '/file/not/dir';
+    const actionResult = trustCommand?.action?.(mockContext);
     expect(actionResult).toEqual({
       type: 'message',
       messageType: 'error',

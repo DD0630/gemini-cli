@@ -22,7 +22,7 @@ describe('modelCommand', () => {
       throw new Error('The model command must have an action.');
     }
 
-    const result = await modelCommand.action(mockContext, '');
+    const result = await modelCommand.action(mockContext);
 
     expect(result).toEqual({
       type: 'dialog',
@@ -40,7 +40,7 @@ describe('modelCommand', () => {
       refreshUserQuota: mockRefreshUserQuota,
     } as unknown as Config;
 
-    await modelCommand.action(mockContext, '');
+    await modelCommand.action(mockContext);
 
     expect(mockRefreshUserQuota).toHaveBeenCalled();
   });

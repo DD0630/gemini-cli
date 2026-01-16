@@ -31,7 +31,7 @@ describe('policiesCommand', () => {
       mockContext.services.config = null;
       const listCommand = policiesCommand.subCommands![0];
 
-      await listCommand.action!(mockContext, '');
+      await listCommand.action!(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -51,7 +51,7 @@ describe('policiesCommand', () => {
       } as unknown as Config;
 
       const listCommand = policiesCommand.subCommands![0];
-      await listCommand.action!(mockContext, '');
+      await listCommand.action!(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -85,7 +85,7 @@ describe('policiesCommand', () => {
       } as unknown as Config;
 
       const listCommand = policiesCommand.subCommands![0];
-      await listCommand.action!(mockContext, '');
+      await listCommand.action!(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         expect.objectContaining({
