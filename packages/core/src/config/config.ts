@@ -72,6 +72,7 @@ import { OutputFormat } from '../output/types.js';
 import type { ModelConfigServiceConfig } from '../services/modelConfigService.js';
 import { ModelConfigService } from '../services/modelConfigService.js';
 import { DEFAULT_MODEL_CONFIGS } from './defaultModelConfigs.js';
+import { deepMerge } from '../utils/merge.js';
 import { ContextManager } from '../services/contextManager.js';
 
 // Re-export OAuth config type
@@ -667,32 +668,12 @@ export class Config {
     this.geminiClient = new GeminiClient(this);
     this.modelRouterService = new ModelRouterService(this);
 
-    // HACK: The settings loading logic doesn't currently merge the default
-    // generation config with the user's settings. This means if a user provides
-    // any `generation` settings (e.g., just `overrides`), the default `aliases`
-    // are lost. This hack manually merges the default aliases back in if they
-    // are missing from the user's config.
-    // TODO(12593): Fix the settings loading logic to properly merge defaults and
-    // remove this hack.
-    let modelConfigServiceConfig = params.modelConfigServiceConfig;
-    if (modelConfigServiceConfig) {
-      if (!modelConfigServiceConfig.aliases) {
-        modelConfigServiceConfig = {
-          ...modelConfigServiceConfig,
-          aliases: DEFAULT_MODEL_CONFIGS.aliases,
-        };
-      }
-      if (!modelConfigServiceConfig.overrides) {
-        modelConfigServiceConfig = {
-          ...modelConfigServiceConfig,
-          overrides: DEFAULT_MODEL_CONFIGS.overrides,
-        };
-      }
-    }
+    const modelConfigServiceConfig = deepMerge(
+      DEFAULT_MODEL_CONFIGS as Record<string, unknown>,
+      params.modelConfigServiceConfig as Record<string, unknown>,
+    ) as ModelConfigServiceConfig;
 
-    this.modelConfigService = new ModelConfigService(
-      modelConfigServiceConfig ?? DEFAULT_MODEL_CONFIGS,
-    );
+    this.modelConfigService = new ModelConfigService(modelConfigServiceConfig);
   }
 
   /**
