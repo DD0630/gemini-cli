@@ -279,11 +279,22 @@ Would you like to attempt to install via "git clone" instead?`,
           newExtensionName,
         ).getExtensionDir();
         let previousSettings: Record<string, string> | undefined;
+        let backupPath: string | undefined;
+
         if (isUpdate) {
           previousSettings = await getEnvContents(
             previousExtensionConfig,
             extensionId,
           );
+
+          const previousExtension = this.getExtensions().find(
+            (e) => e.name === newExtensionConfig.name,
+          );
+          if (previousExtension) {
+            backupPath = await ExtensionStorage.createTmpDir();
+            await copyExtension(previousExtension.path, backupPath);
+          }
+
           await this.uninstallExtension(newExtensionName, isUpdate);
         }
 
@@ -321,12 +332,40 @@ Would you like to attempt to install via "git clone" instead?`,
         );
         await fs.promises.writeFile(metadataPath, metadataString);
 
-        // TODO: Gracefully handle this call failing, we should back up the old
-        // extension prior to overwriting it and then restore and restart it.
-        extension = await this.loadExtension(destinationPath);
-        if (!extension) {
-          throw new Error(`Extension not found`);
+        try {
+          extension = await this.loadExtension(destinationPath);
+          if (!extension) {
+            throw new Error(`Extension not found`);
+          }
+        } catch (e) {
+          if (isUpdate && backupPath) {
+            debugLogger.error(
+              `Failed to load updated extension. Restoring previous version...`,
+            );
+            await fs.promises.rm(destinationPath, {
+              recursive: true,
+              force: true,
+            });
+            await fs.promises.mkdir(destinationPath, { recursive: true });
+            await copyExtension(backupPath, destinationPath);
+            const restoredExtension = await this.loadExtension(destinationPath);
+            if (restoredExtension) {
+              debugLogger.info(
+                `Restored previous version of extension ${newExtensionConfig.name}`,
+              );
+            } else {
+              debugLogger.error(
+                `Failed to restore previous version of extension ${newExtensionConfig.name}`,
+              );
+            }
+          }
+          throw e;
+        } finally {
+          if (backupPath) {
+            await fs.promises.rm(backupPath, { recursive: true, force: true });
+          }
         }
+
         if (isUpdate) {
           await logExtensionUpdateEvent(
             this.telemetryConfig,
