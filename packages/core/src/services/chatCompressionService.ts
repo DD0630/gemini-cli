@@ -216,6 +216,8 @@ export class ChatCompressionService {
       fullNewHistory.flatMap((c) => c.parts || []),
       config.getContentGenerator(),
       model,
+      chat.getSystemInstruction(),
+      chat.getTools(),
     );
 
     logChatCompression(

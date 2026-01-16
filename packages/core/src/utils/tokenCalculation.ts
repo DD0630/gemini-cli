@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { PartListUnion, Part } from '@google/genai';
+import type { PartListUnion, Part, Tool } from '@google/genai';
 import type { ContentGenerator } from '../core/contentGenerator.js';
 
 // Token estimation constants
@@ -49,6 +49,8 @@ export async function calculateRequestTokenCount(
   request: PartListUnion,
   contentGenerator: ContentGenerator,
   model: string,
+  systemInstruction?: string,
+  tools?: Tool[],
 ): Promise<number> {
   const parts: Part[] = Array.isArray(request)
     ? request.map((p) => (typeof p === 'string' ? { text: p } : p))
@@ -67,13 +69,28 @@ export async function calculateRequestTokenCount(
       const response = await contentGenerator.countTokens({
         model,
         contents: [{ role: 'user', parts }],
+        config: {
+          systemInstruction,
+          tools,
+        },
       });
       return response.totalTokens ?? 0;
     } catch {
       // Fallback to local estimation if the API call fails
-      return estimateTokenCountSync(parts);
+      // We proceed to the local estimation block below.
     }
   }
 
-  return estimateTokenCountSync(parts);
+  let totalTokens = estimateTokenCountSync(parts);
+
+  if (systemInstruction) {
+    totalTokens += estimateTokenCountSync([{ text: systemInstruction }]);
+  }
+
+  if (tools) {
+    // Approximate tools token count
+    totalTokens += JSON.stringify(tools).length / 4;
+  }
+
+  return Math.floor(totalTokens);
 }
