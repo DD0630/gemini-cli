@@ -79,4 +79,62 @@ describe('DebugLogger', () => {
     expect(warnSpy).toHaveBeenCalledWith();
     expect(warnSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('should delegate calls when a delegate is set', () => {
+    const delegate = {
+      log: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+
+    debugLogger.setDelegate(delegate);
+
+    debugLogger.log('log msg');
+    expect(delegate.log).toHaveBeenCalledWith('log msg');
+
+    debugLogger.warn('warn msg');
+    expect(delegate.warn).toHaveBeenCalledWith('warn msg');
+
+    debugLogger.error('error msg');
+    expect(delegate.error).toHaveBeenCalledWith('error msg');
+
+    debugLogger.debug('debug msg');
+    expect(delegate.debug).toHaveBeenCalledWith('debug msg');
+
+    // Reset delegate for other tests (although afterEach restores mocks, global state like singleton instance persists)
+    // The previous tests mock console methods, so they check fallback behavior.
+    // If I leave delegate set, fallback won't be called.
+    debugLogger.setDelegate(undefined);
+  });
+
+  it('should prefix messages when using getLogger', () => {
+    debugLogger.setDelegate(undefined); // Ensure no delegate
+
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
+    const logger = debugLogger.getLogger('MyComponent');
+    logger.debug('hello');
+
+    expect(debugSpy).toHaveBeenCalledWith('[MyComponent]', 'hello');
+  });
+
+  it('should prefix messages and delegate when using getLogger with delegate', () => {
+    const delegate = {
+      log: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+
+    debugLogger.setDelegate(delegate);
+
+    const logger = debugLogger.getLogger('MyComponent');
+    logger.debug('hello');
+
+    expect(delegate.debug).toHaveBeenCalledWith('[MyComponent]', 'hello');
+
+    // Clean up
+    debugLogger.setDelegate(undefined);
+  });
 });
