@@ -82,6 +82,7 @@ export * from './utils/thoughtUtils.js';
 export * from './utils/debugLogger.js';
 export * from './utils/events.js';
 export * from './utils/extensionLoader.js';
+export * from './utils/customCommandManager.js';
 export * from './utils/package.js';
 export * from './utils/version.js';
 export * from './utils/checkpointUtils.js';

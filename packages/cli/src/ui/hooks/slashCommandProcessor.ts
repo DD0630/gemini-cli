@@ -14,11 +14,7 @@ import {
 import { type PartListUnion } from '@google/genai';
 import process from 'node:process';
 import type { UseHistoryManagerReturn } from './useHistoryManager.js';
-import type {
-  Config,
-  ExtensionsStartingEvent,
-  ExtensionsStoppingEvent,
-} from '@google/gemini-cli-core';
+import type { Config } from '@google/gemini-cli-core';
 import {
   GitService,
   Logger,
@@ -49,7 +45,6 @@ import {
   type ExtensionUpdateAction,
   type ExtensionUpdateStatus,
 } from '../state/extensions.js';
-import { appEvents } from '../../utils/events.js';
 import {
   LogoutConfirmationDialog,
   LogoutChoice,
@@ -269,19 +264,11 @@ export const useSlashCommandProcessor = (
       ideClient.addStatusChangeListener(listener);
     })();
 
-    // TODO: Ideally this would happen more directly inside the ExtensionLoader,
-    // but the CommandService today is not conducive to that since it isn't a
-    // long lived service but instead gets fully re-created based on reload
-    // events within this hook.
-    const extensionEventListener = (
-      _event: ExtensionsStartingEvent | ExtensionsStoppingEvent,
-    ) => {
-      // We only care once at least one extension has completed
-      // starting/stopping
-      reloadCommands();
-    };
-    appEvents.on('extensionsStarting', extensionEventListener);
-    appEvents.on('extensionsStopping', extensionEventListener);
+    const unsubscribe = config
+      .getExtensionLoader()
+      .customCommandManager?.subscribe(() => {
+        reloadCommands();
+      });
 
     return () => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -289,8 +276,7 @@ export const useSlashCommandProcessor = (
         const ideClient = await IdeClient.getInstance();
         ideClient.removeStatusChangeListener(listener);
       })();
-      appEvents.off('extensionsStarting', extensionEventListener);
-      appEvents.off('extensionsStopping', extensionEventListener);
+      unsubscribe?.();
     };
   }, [config, reloadCommands]);
 
