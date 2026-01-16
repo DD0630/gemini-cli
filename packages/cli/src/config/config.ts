@@ -701,10 +701,12 @@ export async function loadCliConfig(
     retryFetchErrors: settings.general?.retryFetchErrors ?? false,
     ptyInfo: ptyInfo?.name,
     modelConfigServiceConfig: settings.modelConfigs,
-    // TODO: loading of hooks based on workspace trust
+    // Hooks should only be loaded if the workspace is trusted.
+    // For now, we only disable project hooks if the workspace is not trusted,
+    // as global hooks are considered trusted (configured by the user).
     enableHooks: settings.tools?.enableHooks ?? false,
     hooks: settings.hooks || {},
-    projectHooks: projectHooks || {},
+    projectHooks: trustedFolder ? projectHooks || {} : {},
     onModelChange: (model: string) => saveModelChange(loadedSettings, model),
   });
 }
