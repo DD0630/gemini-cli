@@ -52,6 +52,7 @@ import { requestConsentNonInteractive } from './extensions/consent.js';
 import { promptForSetting } from './extensions/extensionSettings.js';
 import type { EventEmitter } from 'node:stream';
 import { runExitCleanup } from '../utils/cleanup.js';
+import { CommandRefresher } from '../services/commandRefresher.js';
 
 export interface CliArgs {
   query: string | undefined;
@@ -437,6 +438,8 @@ export async function loadCliConfig(
     .map(resolvePath)
     .concat((argv.includeDirectories || []).map(resolvePath));
 
+  const commandRefresher = new CommandRefresher();
+
   const extensionManager = new ExtensionManager({
     settings,
     requestConsent: requestConsentNonInteractive,
@@ -444,6 +447,7 @@ export async function loadCliConfig(
     workspaceDir: cwd,
     enabledExtensionOverrides: argv.extensions,
     eventEmitter: appEvents as EventEmitter<ExtensionEvents>,
+    customCommandManager: commandRefresher,
   });
   await extensionManager.loadExtensions();
 

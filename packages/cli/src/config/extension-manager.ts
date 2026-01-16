@@ -45,6 +45,7 @@ import {
   type HookDefinition,
   type HookEventName,
   type ResolvedExtensionSetting,
+  type CustomCommandManager,
 } from '@google/gemini-cli-core';
 import { maybeRequestConsentOrFail } from './extensions/consent.js';
 import { resolveEnvVarsInObject } from '../utils/envVarResolver.js';
@@ -69,6 +70,7 @@ interface ExtensionManagerParams {
   requestSetting: ((setting: ExtensionSetting) => Promise<string>) | null;
   workspaceDir: string;
   eventEmitter?: EventEmitter<ExtensionEvents>;
+  customCommandManager?: CustomCommandManager;
 }
 
 /**
@@ -88,7 +90,7 @@ export class ExtensionManager extends ExtensionLoader {
   private loadedExtensions: GeminiCLIExtension[] | undefined;
 
   constructor(options: ExtensionManagerParams) {
-    super(options.eventEmitter);
+    super(options.eventEmitter, options.customCommandManager);
     this.workspaceDir = options.workspaceDir;
     this.extensionEnablementManager = new ExtensionEnablementManager(
       options.enabledExtensionOverrides,

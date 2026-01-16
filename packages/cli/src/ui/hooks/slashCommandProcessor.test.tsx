@@ -1105,6 +1105,22 @@ describe('useSlashCommandProcessor', () => {
   });
 
   it('should reload commands on extension events', async () => {
+    const mockSubscribe = vi.fn();
+    const mockCustomCommandManager = {
+      refreshCommands: vi.fn(),
+      subscribe: mockSubscribe,
+    };
+
+    // Create a mock ExtensionLoader
+    const mockExtensionLoader = {
+      customCommandManager: mockCustomCommandManager,
+    };
+
+    // Spy on getExtensionLoader to return our mock
+    vi.spyOn(mockConfig, 'getExtensionLoader').mockReturnValue(
+      mockExtensionLoader as any,
+    );
+
     const result = await setupProcessorHook();
     await waitFor(() => expect(result.current.slashCommands).toEqual([]));
 
@@ -1118,8 +1134,14 @@ describe('useSlashCommandProcessor', () => {
 
     // We should not see a change until we fire an event.
     await waitFor(() => expect(result.current.slashCommands).toEqual([]));
+
+    // Verify subscription happened
+    expect(mockSubscribe).toHaveBeenCalled();
+    const callback = mockSubscribe.mock.calls[0][0];
+
+    // Trigger update
     act(() => {
-      appEvents.emit('extensionsStarting');
+      callback();
     });
     await waitFor(() =>
       expect(result.current.slashCommands).toEqual([newCommand]),

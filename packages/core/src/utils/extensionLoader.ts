@@ -7,6 +7,7 @@
 import type { EventEmitter } from 'node:events';
 import type { Config, GeminiCLIExtension } from '../config/config.js';
 import { refreshServerHierarchicalMemory } from './memoryDiscovery.js';
+import type { CustomCommandManager } from './customCommandManager.js';
 
 export abstract class ExtensionLoader {
   // Assigned in `start`.
@@ -22,7 +23,10 @@ export abstract class ExtensionLoader {
   // Whether or not we are currently executing `start`
   private isStarting: boolean = false;
 
-  constructor(private readonly eventEmitter?: EventEmitter<ExtensionEvents>) {}
+  constructor(
+    private readonly eventEmitter?: EventEmitter<ExtensionEvents>,
+    readonly customCommandManager?: CustomCommandManager,
+  ) {}
 
   /**
    * All currently known extensions, both active and inactive.
@@ -79,9 +83,7 @@ export abstract class ExtensionLoader {
       // loading/unloading to reduce churn, see the `maybeRefreshMemories` call
       // below.
 
-      // TODO: Update custom command updating away from the event based system
-      // and call directly into a custom command manager here. See the
-      // useSlashCommandProcessor hook which responds to events fired here today.
+      this.customCommandManager?.refreshCommands();
     } finally {
       this.startCompletedCount++;
       this.eventEmitter?.emit('extensionsStarting', {
@@ -170,9 +172,7 @@ export abstract class ExtensionLoader {
       // loading/unloading to reduce churn, see the `maybeRefreshMemories` call
       // below.
 
-      // TODO: Update custom command updating away from the event based system
-      // and call directly into a custom command manager here. See the
-      // useSlashCommandProcessor hook which responds to events fired here today.
+      this.customCommandManager?.refreshCommands();
     } finally {
       this.stopCompletedCount++;
       this.eventEmitter?.emit('extensionsStopping', {
@@ -225,8 +225,9 @@ export class SimpleExtensionLoader extends ExtensionLoader {
   constructor(
     protected readonly extensions: GeminiCLIExtension[],
     eventEmitter?: EventEmitter<ExtensionEvents>,
+    customCommandManager?: CustomCommandManager,
   ) {
-    super(eventEmitter);
+    super(eventEmitter, customCommandManager);
   }
 
   getExtensions(): GeminiCLIExtension[] {
