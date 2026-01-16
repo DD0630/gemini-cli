@@ -103,6 +103,7 @@ import { isAlternateBufferEnabled } from './ui/hooks/useAlternateBuffer.js';
 
 import { setupTerminalAndTheme } from './utils/terminalTheme.js';
 import { profiler } from './ui/components/DebugProfiler.js';
+import { injectStdinIntoArgs } from './utils/args.js';
 
 const SLOW_RENDER_MS = 200;
 
@@ -433,29 +434,6 @@ export async function main() {
       if (!process.stdin.isTTY) {
         stdinData = await readStdin();
       }
-
-      // This function is a copy of the one from sandbox.ts
-      // It is moved here to decouple sandbox.ts from the CLI's argument structure.
-      const injectStdinIntoArgs = (
-        args: string[],
-        stdinData?: string,
-      ): string[] => {
-        const finalArgs = [...args];
-        if (stdinData) {
-          const promptIndex = finalArgs.findIndex(
-            (arg) => arg === '--prompt' || arg === '-p',
-          );
-          if (promptIndex > -1 && finalArgs.length > promptIndex + 1) {
-            // If there's a prompt argument, prepend stdin to it
-            finalArgs[promptIndex + 1] =
-              `${stdinData}\n\n${finalArgs[promptIndex + 1]}`;
-          } else {
-            // If there's no prompt argument, add stdin as the prompt
-            finalArgs.push('--prompt', stdinData);
-          }
-        }
-        return finalArgs;
-      };
 
       const sandboxArgs = injectStdinIntoArgs(process.argv, stdinData);
 
