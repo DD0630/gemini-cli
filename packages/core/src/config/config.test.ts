@@ -1980,3 +1980,27 @@ describe('Config JIT Initialization', () => {
     expect(config.getUserMemory()).toBe('Initial Memory');
   });
 });
+
+describe('Custom Excludes', () => {
+  const baseParams: ConfigParameters = {
+    sessionId: 'test-session',
+    targetDir: '/tmp/test',
+    debugMode: false,
+    model: 'test-model',
+    cwd: '/tmp/test',
+  };
+
+  it('should return empty array if customExcludes is not provided', () => {
+    const config = new Config(baseParams);
+    expect(config.getCustomExcludes()).toEqual([]);
+  });
+
+  it('should return customExcludes if provided', () => {
+    const excludes = ['node_modules', '*.log'];
+    const config = new Config({
+      ...baseParams,
+      customExcludes: excludes,
+    });
+    expect(config.getCustomExcludes()).toEqual(excludes);
+  });
+});
