@@ -20,6 +20,7 @@ import type {
   ToolCallConfirmationDetails,
   ToolResult,
   AnyDeclarativeTool,
+  ToolExecutionCallbacks,
 } from '../tools/tools.js';
 import { ToolErrorType } from '../tools/tool-error.js';
 import { debugLogger } from '../utils/debugLogger.js';
@@ -257,9 +258,8 @@ export async function executeToolWithHooks(
   messageBus: MessageBus | undefined,
   hooksEnabled: boolean,
   tool: AnyDeclarativeTool,
-  liveOutputCallback?: (outputChunk: string | AnsiOutput) => void,
+  callbacks?: ToolExecutionCallbacks,
   shellExecutionConfig?: ShellExecutionConfig,
-  setPidCallback?: (pid: number) => void,
 ): Promise<ToolResult> {
   const toolInput = (invocation.params || {}) as Record<string, unknown>;
   let inputWasModified = false;
@@ -333,21 +333,11 @@ export async function executeToolWithHooks(
   }
 
   // Execute the actual tool
-  let toolResult: ToolResult;
-  if (setPidCallback && invocation instanceof ShellToolInvocation) {
-    toolResult = await invocation.execute(
-      signal,
-      liveOutputCallback,
-      shellExecutionConfig,
-      setPidCallback,
-    );
-  } else {
-    toolResult = await invocation.execute(
-      signal,
-      liveOutputCallback,
-      shellExecutionConfig,
-    );
-  }
+  const toolResult = await invocation.execute(
+    signal,
+    callbacks,
+    shellExecutionConfig,
+  );
 
   // Append notification if parameters were modified
   if (inputWasModified) {

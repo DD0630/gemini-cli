@@ -12,6 +12,7 @@ import type {
   ToolCallConfirmationDetails,
   ToolInvocation,
   ToolResult,
+  ToolExecutionCallbacks,
 } from '../tools/tools.js';
 import {
   BaseDeclarativeTool,
@@ -50,10 +51,10 @@ class MockToolInvocation extends BaseToolInvocation<
 
   execute(
     signal: AbortSignal,
-    updateOutput?: (output: string) => void,
+    callbacks?: ToolExecutionCallbacks,
   ): Promise<ToolResult> {
-    if (updateOutput) {
-      return this.tool.execute(this.params, signal, updateOutput);
+    if (callbacks?.onLiveOutput) {
+      return this.tool.execute(this.params, signal, callbacks.onLiveOutput);
     } else {
       return this.tool.execute(this.params);
     }

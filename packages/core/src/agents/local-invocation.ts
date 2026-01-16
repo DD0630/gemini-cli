@@ -7,7 +7,11 @@
 import type { Config } from '../config/config.js';
 import { LocalAgentExecutor } from './local-executor.js';
 import type { AnsiOutput } from '../utils/terminalSerializer.js';
-import { BaseToolInvocation, type ToolResult } from '../tools/tools.js';
+import {
+  BaseToolInvocation,
+  type ToolResult,
+  type ToolExecutionCallbacks,
+} from '../tools/tools.js';
 import { ToolErrorType } from '../tools/tool-error.js';
 import type {
   LocalAgentDefinition,
@@ -74,23 +78,23 @@ export class LocalSubagentInvocation extends BaseToolInvocation<
    */
   async execute(
     signal: AbortSignal,
-    updateOutput?: (output: string | AnsiOutput) => void,
+    callbacks?: ToolExecutionCallbacks,
   ): Promise<ToolResult> {
     try {
-      if (updateOutput) {
-        updateOutput('Subagent starting...\n');
+      if (callbacks?.onLiveOutput) {
+        callbacks.onLiveOutput('Subagent starting...\n');
       }
 
       // Create an activity callback to bridge the executor's events to the
       // tool's streaming output.
       const onActivity = (activity: SubagentActivityEvent): void => {
-        if (!updateOutput) return;
+        if (!callbacks?.onLiveOutput) return;
 
         if (
           activity.type === 'THOUGHT_CHUNK' &&
           typeof activity.data['text'] === 'string'
         ) {
-          updateOutput(`🤖💭 ${activity.data['text']}`);
+          callbacks.onLiveOutput(`🤖💭 ${activity.data['text']}`);
         }
       };
 

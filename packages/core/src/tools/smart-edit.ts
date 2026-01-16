@@ -19,6 +19,7 @@ import {
   type ToolLocation,
   type ToolResult,
   type ToolResultDisplay,
+  type ToolExecutionCallbacks,
 } from './tools.js';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
 import { ToolErrorType } from './tool-error.js';
@@ -730,7 +731,10 @@ class EditToolInvocation
    * @param params Parameters for the edit operation
    * @returns Result of the edit operation
    */
-  async execute(signal: AbortSignal): Promise<ToolResult> {
+  async execute(
+    signal: AbortSignal,
+    _callbacks?: ToolExecutionCallbacks,
+  ): Promise<ToolResult> {
     let editData: CalculatedEdit;
     try {
       editData = await this.calculateEdit(this.params, signal);

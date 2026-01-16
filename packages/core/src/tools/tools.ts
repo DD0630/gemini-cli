@@ -60,9 +60,14 @@ export interface ToolInvocation<
    */
   execute(
     signal: AbortSignal,
-    updateOutput?: (output: string | AnsiOutput) => void,
+    callbacks?: ToolExecutionCallbacks,
     shellExecutionConfig?: ShellExecutionConfig,
   ): Promise<TResult>;
+}
+
+export interface ToolExecutionCallbacks {
+  onLiveOutput?: (output: string | AnsiOutput) => void;
+  onPid?: (pid: number) => void;
 }
 
 /**
@@ -266,7 +271,7 @@ export abstract class BaseToolInvocation<
 
   abstract execute(
     signal: AbortSignal,
-    updateOutput?: (output: string | AnsiOutput) => void,
+    callbacks?: ToolExecutionCallbacks,
     shellExecutionConfig?: ShellExecutionConfig,
   ): Promise<TResult>;
 }
@@ -388,11 +393,11 @@ export abstract class DeclarativeTool<
   async buildAndExecute(
     params: TParams,
     signal: AbortSignal,
-    updateOutput?: (output: string | AnsiOutput) => void,
+    callbacks?: ToolExecutionCallbacks,
     shellExecutionConfig?: ShellExecutionConfig,
   ): Promise<TResult> {
     const invocation = this.build(params);
-    return invocation.execute(signal, updateOutput, shellExecutionConfig);
+    return invocation.execute(signal, callbacks, shellExecutionConfig);
   }
 
   /**
