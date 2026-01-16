@@ -18,6 +18,11 @@ export const GOOGLE_ACCOUNTS_FILENAME = 'google_accounts.json';
  */
 export const SHELL_SPECIAL_CHARS = /[ \t()[\]{};|*?$`'"#&<>!~]/;
 
+const UNESCAPE_PATH_REGEX = new RegExp(
+  `\\\\([${SHELL_SPECIAL_CHARS.source.slice(1, -1)}])`,
+  'g',
+);
+
 /**
  * Replaces the home directory with a tilde.
  * @param path - The path to tildeify.
@@ -288,10 +293,7 @@ export function escapePath(filePath: string): string {
  * Removes backslash escaping from shell metacharacters.
  */
 export function unescapePath(filePath: string): string {
-  return filePath.replace(
-    new RegExp(`\\\\([${SHELL_SPECIAL_CHARS.source.slice(1, -1)}])`, 'g'),
-    '$1',
-  );
+  return filePath.replace(UNESCAPE_PATH_REGEX, '$1');
 }
 
 /**
