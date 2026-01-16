@@ -17,6 +17,7 @@ import type {
 import { CommandKind } from '../commands/types.js';
 import type { LoadedSettings } from '../../config/settings.js';
 import { MessageType, type SlashCommandProcessorResult } from '../types.js';
+import { CommandService } from '../../services/CommandService.js';
 import { BuiltinCommandLoader } from '../../services/BuiltinCommandLoader.js';
 import { FileCommandLoader } from '../../services/FileCommandLoader.js';
 import { McpPromptLoader } from '../../services/McpPromptLoader.js';
@@ -168,6 +169,16 @@ describe('useSlashCommandProcessor', () => {
     mockBuiltinLoadCommands.mockResolvedValue(Object.freeze(builtinCommands));
     mockFileLoadCommands.mockResolvedValue(Object.freeze(fileCommands));
     mockMcpLoadCommands.mockResolvedValue(Object.freeze(mcpCommands));
+
+    const commandService = new CommandService([
+      new McpPromptLoader(mockConfig),
+      new BuiltinCommandLoader(mockConfig),
+      new FileCommandLoader(mockConfig),
+    ]);
+    await commandService.reloadCommands();
+
+    // @ts-ignore
+    mockConfig.getCustomCommandManager = vi.fn().mockReturnValue(commandService);
 
     let result!: { current: ReturnType<typeof useSlashCommandProcessor> };
     let unmount!: () => void;
@@ -993,17 +1004,6 @@ describe('useSlashCommandProcessor', () => {
     });
   });
 
-  describe('Lifecycle', () => {
-    it('should abort command loading when the hook unmounts', async () => {
-      const abortSpy = vi.spyOn(AbortController.prototype, 'abort');
-      const { unmount } = await setupProcessorHook();
-
-      unmount();
-
-      expect(abortSpy).toHaveBeenCalledTimes(1);
-    });
-  });
-
   describe('Slash Command Logging', () => {
     const mockCommandAction = vi.fn().mockResolvedValue({ type: 'handled' });
     let loggingTestCommands: SlashCommand[];
@@ -1104,7 +1104,7 @@ describe('useSlashCommandProcessor', () => {
     });
   });
 
-  it('should reload commands on extension events', async () => {
+  it('should reload commands when command service updates', async () => {
     const result = await setupProcessorHook();
     await waitFor(() => expect(result.current.slashCommands).toEqual([]));
 
@@ -1116,10 +1116,11 @@ describe('useSlashCommandProcessor', () => {
     });
     mockFileLoadCommands.mockResolvedValue([newCommand]);
 
-    // We should not see a change until we fire an event.
+    const commandService = mockConfig.getCustomCommandManager()!;
+    // We should not see a change until we reload.
     await waitFor(() => expect(result.current.slashCommands).toEqual([]));
-    act(() => {
-      appEvents.emit('extensionsStarting');
+    await act(async () => {
+      await commandService.reloadCommands();
     });
     await waitFor(() =>
       expect(result.current.slashCommands).toEqual([newCommand]),

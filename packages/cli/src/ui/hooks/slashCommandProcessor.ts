@@ -49,7 +49,6 @@ import {
   type ExtensionUpdateAction,
   type ExtensionUpdateStatus,
 } from '../state/extensions.js';
-import { appEvents } from '../../utils/events.js';
 import {
   LogoutConfirmationDialog,
   LogoutChoice,
@@ -95,11 +94,17 @@ export const useSlashCommandProcessor = (
   const [commands, setCommands] = useState<readonly SlashCommand[] | undefined>(
     undefined,
   );
-  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   const reloadCommands = useCallback(() => {
-    setReloadTrigger((v) => v + 1);
-  }, []);
+    if (!config) return;
+    const commandService = config.getCustomCommandManager() as
+      | CommandService
+      | undefined;
+    if (commandService) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      commandService.reloadCommands();
+    }
+  }, [config]);
   const [shellConfirmationRequest, setShellConfirmationRequest] =
     useState<null | {
       commands: string[];
@@ -269,51 +274,39 @@ export const useSlashCommandProcessor = (
       ideClient.addStatusChangeListener(listener);
     })();
 
-    // TODO: Ideally this would happen more directly inside the ExtensionLoader,
-    // but the CommandService today is not conducive to that since it isn't a
-    // long lived service but instead gets fully re-created based on reload
-    // events within this hook.
-    const extensionEventListener = (
-      _event: ExtensionsStartingEvent | ExtensionsStoppingEvent,
-    ) => {
-      // We only care once at least one extension has completed
-      // starting/stopping
-      reloadCommands();
-    };
-    appEvents.on('extensionsStarting', extensionEventListener);
-    appEvents.on('extensionsStopping', extensionEventListener);
-
     return () => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       (async () => {
         const ideClient = await IdeClient.getInstance();
         ideClient.removeStatusChangeListener(listener);
       })();
-      appEvents.off('extensionsStarting', extensionEventListener);
-      appEvents.off('extensionsStopping', extensionEventListener);
     };
   }, [config, reloadCommands]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    if (!config) {
+      return;
+    }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    (async () => {
-      const commandService = await CommandService.create(
-        [
-          new McpPromptLoader(config),
-          new BuiltinCommandLoader(config),
-          new FileCommandLoader(config),
-        ],
-        controller.signal,
-      );
+    const commandService = config.getCustomCommandManager() as
+      | CommandService
+      | undefined;
+    if (!commandService) {
+      return;
+    }
+
+    // Set initial commands
+    setCommands(commandService.getCommands());
+
+    // Subscribe
+    const unsubscribe = commandService.subscribe(() => {
       setCommands(commandService.getCommands());
-    })();
+    });
 
     return () => {
-      controller.abort();
+      unsubscribe();
     };
-  }, [config, reloadTrigger, isConfigInitialized]);
+  }, [config]);
 
   const handleSlashCommand = useCallback(
     async (
