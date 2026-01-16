@@ -1980,3 +1980,54 @@ describe('Config JIT Initialization', () => {
     expect(config.getUserMemory()).toBe('Initial Memory');
   });
 });
+
+describe('Performance Monitoring Settings', () => {
+  const baseParams: ConfigParameters = {
+    cwd: '/tmp',
+    targetDir: '/tmp',
+    debugMode: false,
+    sessionId: 'test-session',
+    model: 'gemini-pro',
+    usageStatisticsEnabled: false,
+  };
+
+  it('should return empty settings if not provided', () => {
+    const config = new Config(baseParams);
+    expect(config.getPerformanceMonitoringSettings()).toEqual({
+      enabled: undefined,
+      thresholds: {},
+    });
+  });
+
+  it('should return configured settings', () => {
+    const params: ConfigParameters = {
+      ...baseParams,
+      performanceMonitoring: {
+        enabled: true,
+        thresholds: {
+          startupTime: 1000,
+          memoryUsage: 500000,
+        },
+      },
+    };
+    const config = new Config(params);
+    expect(config.getPerformanceMonitoringSettings()).toEqual({
+      enabled: true,
+      thresholds: {
+        startupTime: 1000,
+        memoryUsage: 500000,
+      },
+    });
+  });
+
+  it('should respect enabled: false', () => {
+    const params: ConfigParameters = {
+      ...baseParams,
+      performanceMonitoring: {
+        enabled: false,
+      },
+    };
+    const config = new Config(params);
+    expect(config.getPerformanceMonitoringSettings().enabled).toBe(false);
+  });
+});

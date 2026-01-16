@@ -115,6 +115,18 @@ export interface SummarizeToolOutputSettings {
   tokenBudget?: number;
 }
 
+export interface PerformanceThresholds {
+  startupTime?: number; // ms
+  memoryUsage?: number; // bytes
+  cpuUsage?: number; // percentage
+  slowRenderLatency?: number; // ms
+}
+
+export interface PerformanceMonitoringSettings {
+  enabled?: boolean;
+  thresholds?: PerformanceThresholds;
+}
+
 export interface TelemetrySettings {
   enabled?: boolean;
   target?: TelemetryTarget;
@@ -281,6 +293,7 @@ export interface ConfigParameters {
   contextFileName?: string | string[];
   accessibility?: AccessibilitySettings;
   telemetry?: TelemetrySettings;
+  performanceMonitoring?: PerformanceMonitoringSettings;
   usageStatisticsEnabled?: boolean;
   fileFiltering?: {
     respectGitIgnore?: boolean;
@@ -394,6 +407,7 @@ export class Config {
   private readonly showMemoryUsage: boolean;
   private readonly accessibility: AccessibilitySettings;
   private readonly telemetrySettings: TelemetrySettings;
+  private readonly performanceMonitoringSettings: PerformanceMonitoringSettings;
   private readonly usageStatisticsEnabled: boolean;
   private geminiClient!: GeminiClient;
   private baseLlmClient!: BaseLlmClient;
@@ -527,6 +541,10 @@ export class Config {
       outfile: params.telemetry?.outfile,
       useCollector: params.telemetry?.useCollector,
       useCliAuth: params.telemetry?.useCliAuth,
+    };
+    this.performanceMonitoringSettings = {
+      enabled: params.performanceMonitoring?.enabled,
+      thresholds: params.performanceMonitoring?.thresholds ?? {},
     };
     this.usageStatisticsEnabled = params.usageStatisticsEnabled ?? true;
 
@@ -1258,6 +1276,10 @@ export class Config {
 
   getTelemetryUseCliAuth(): boolean {
     return this.telemetrySettings.useCliAuth ?? false;
+  }
+
+  getPerformanceMonitoringSettings(): PerformanceMonitoringSettings {
+    return this.performanceMonitoringSettings;
   }
 
   getGeminiClient(): GeminiClient {
