@@ -287,6 +287,7 @@ export interface ConfigParameters {
     respectGeminiIgnore?: boolean;
     enableRecursiveFileSearch?: boolean;
     disableFuzzySearch?: boolean;
+    customExcludes?: string[];
   };
   checkpointing?: boolean;
   proxy?: string;
@@ -404,6 +405,7 @@ export class Config {
     respectGeminiIgnore: boolean;
     enableRecursiveFileSearch: boolean;
     disableFuzzySearch: boolean;
+    customExcludes: string[];
   };
   private fileDiscoveryService: FileDiscoveryService | null = null;
   private gitService: GitService | undefined = undefined;
@@ -540,6 +542,7 @@ export class Config {
       enableRecursiveFileSearch:
         params.fileFiltering?.enableRecursiveFileSearch ?? true,
       disableFuzzySearch: params.fileFiltering?.disableFuzzySearch ?? false,
+      customExcludes: params.fileFiltering?.customExcludes ?? [],
     };
     this.checkpointing = params.checkpointing ?? false;
     this.proxy = params.proxy;
@@ -1307,17 +1310,9 @@ export class Config {
 
   /**
    * Gets custom file exclusion patterns from configuration.
-   * TODO: This is a placeholder implementation. In the future, this could
-   * read from settings files, CLI arguments, or environment variables.
    */
   getCustomExcludes(): string[] {
-    // Placeholder implementation - returns empty array for now
-    // Future implementation could read from:
-    // - User settings file
-    // - Project-specific configuration
-    // - Environment variables
-    // - CLI arguments
-    return [];
+    return this.fileFiltering.customExcludes;
   }
 
   getCheckpointingEnabled(): boolean {
