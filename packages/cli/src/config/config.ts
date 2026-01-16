@@ -52,6 +52,10 @@ import { requestConsentNonInteractive } from './extensions/consent.js';
 import { promptForSetting } from './extensions/extensionSettings.js';
 import type { EventEmitter } from 'node:stream';
 import { runExitCleanup } from '../utils/cleanup.js';
+import { CommandService } from '../services/CommandService.js';
+import { BuiltinCommandLoader } from '../services/BuiltinCommandLoader.js';
+import { FileCommandLoader } from '../services/FileCommandLoader.js';
+import { McpPromptLoader } from '../services/McpPromptLoader.js';
 
 export interface CliArgs {
   query: string | undefined;
@@ -707,6 +711,19 @@ export async function loadCliConfig(
     projectHooks: projectHooks || {},
     onModelChange: (model: string) => saveModelChange(loadedSettings, model),
   });
+
+  const commandService = new CommandService([
+    new McpPromptLoader(config),
+    new BuiltinCommandLoader(config),
+    new FileCommandLoader(config),
+  ]);
+  // Initial load
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  commandService.reloadCommands();
+
+  config.setCustomCommandManager(commandService);
+
+  return config;
 }
 
 function mergeExcludeTools(

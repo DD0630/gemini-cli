@@ -73,6 +73,7 @@ import type { ModelConfigServiceConfig } from '../services/modelConfigService.js
 import { ModelConfigService } from '../services/modelConfigService.js';
 import { DEFAULT_MODEL_CONFIGS } from './defaultModelConfigs.js';
 import { ContextManager } from '../services/contextManager.js';
+import type { CustomCommandManager } from './customCommandManager.js';
 
 // Re-export OAuth config type
 export type { MCPOAuthConfig, AnyToolInvocation };
@@ -500,6 +501,7 @@ export class Config {
   private readonly experimentalJitContext: boolean;
   private contextManager?: ContextManager;
   private terminalBackground: string | undefined = undefined;
+  private customCommandManager?: CustomCommandManager;
 
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId;
@@ -1829,6 +1831,14 @@ export class Config {
       compact: false,
     });
     debugLogger.debug('Experiments loaded', summaryString);
+  }
+
+  setCustomCommandManager(manager: CustomCommandManager) {
+    this.customCommandManager = manager;
+  }
+
+  getCustomCommandManager(): CustomCommandManager | undefined {
+    return this.customCommandManager;
   }
 }
 // Export model constants for use in CLI
