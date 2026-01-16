@@ -308,4 +308,21 @@ src/*.tmp
       expect(parser.isIgnored('foo/bar/file2.txt')).toBe(false);
     });
   });
+
+  describe('Caching behavior', () => {
+    beforeEach(async () => {
+      await setupGitRepo();
+    });
+
+    it('should correctly ignore multiple files in the same directory', async () => {
+      await createTestFile('a/b/.gitignore', 'c.txt\nd.txt');
+      await createTestFile('a/b/c.txt');
+      await createTestFile('a/b/d.txt');
+      await createTestFile('a/b/e.txt');
+
+      expect(parser.isIgnored('a/b/c.txt')).toBe(true);
+      expect(parser.isIgnored('a/b/d.txt')).toBe(true);
+      expect(parser.isIgnored('a/b/e.txt')).toBe(false);
+    });
+  });
 });
