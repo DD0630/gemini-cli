@@ -280,9 +280,7 @@ class WriteFileToolInvocation extends BaseToolInvocation<
 
     try {
       const dirName = path.dirname(this.resolvedPath);
-      if (!fs.existsSync(dirName)) {
-        fs.mkdirSync(dirName, { recursive: true });
-      }
+      await fs.promises.mkdir(dirName, { recursive: true });
 
       await this.config
         .getFileSystemService()
