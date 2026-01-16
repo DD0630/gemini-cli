@@ -43,7 +43,7 @@ export const handleSlashCommand = async (
     [new McpPromptLoader(config), new FileCommandLoader(config)],
     abortController.signal,
   );
-  const commands = commandService.getCommands();
+  const commands = commandService.getCommandMap();
 
   const { commandToExecute, args } = parseSlashCommand(rawQuery, commands);
 

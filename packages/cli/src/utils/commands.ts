@@ -17,12 +17,12 @@ export type ParsedSlashCommand = {
  * If no valid command is found, the `commandToExecute` property will be `undefined`.
  *
  * @param query The raw input string, e.g., "/memory add some data" or "/help".
- * @param commands The list of available top-level slash commands.
+ * @param commands The list of available top-level slash commands or a pre-computed lookup map.
  * @returns An object containing the resolved command, its arguments, and its canonical path.
  */
 export const parseSlashCommand = (
   query: string,
-  commands: readonly SlashCommand[],
+  commands: readonly SlashCommand[] | Map<string, SlashCommand>,
 ): ParsedSlashCommand => {
   const trimmed = query.trim();
 
@@ -35,27 +35,30 @@ export const parseSlashCommand = (
   const canonicalPath: string[] = [];
 
   for (const part of commandPath) {
-    // TODO: For better performance and architectural clarity, this two-pass
-    // search could be replaced. A more optimal approach would be to
-    // pre-compute a single lookup map in `CommandService.ts` that resolves
-    // all name and alias conflicts during the initial loading phase. The
-    // processor would then perform a single, fast lookup on that map.
+    let foundCommand: SlashCommand | undefined;
 
-    // First pass: check for an exact match on the primary command name.
-    let foundCommand = currentCommands.find((cmd) => cmd.name === part);
+    if (currentCommands instanceof Map) {
+      foundCommand = currentCommands.get(part);
+    } else {
+      // First pass: check for an exact match on the primary command name.
+      foundCommand = currentCommands.find((cmd) => cmd.name === part);
 
-    // Second pass: if no primary name matches, check for an alias.
-    if (!foundCommand) {
-      foundCommand = currentCommands.find((cmd) =>
-        cmd.altNames?.includes(part),
-      );
+      // Second pass: if no primary name matches, check for an alias.
+      if (!foundCommand) {
+        foundCommand = currentCommands.find((cmd) =>
+          cmd.altNames?.includes(part),
+        );
+      }
     }
 
     if (foundCommand) {
       commandToExecute = foundCommand;
       canonicalPath.push(foundCommand.name);
       pathIndex++;
-      if (foundCommand.subCommands) {
+
+      if (foundCommand.commandMap) {
+        currentCommands = foundCommand.commandMap;
+      } else if (foundCommand.subCommands) {
         currentCommands = foundCommand.subCommands;
       } else {
         break;
