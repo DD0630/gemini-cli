@@ -350,4 +350,33 @@ describe('CommandService', () => {
     expect(deployExtension).toBeDefined();
     expect(deployExtension?.description).toBe('[gcp] Deploy to Google Cloud');
   });
+
+  it('should reload commands when reloadCommands is called', async () => {
+    const loader = new MockCommandLoader([mockCommandA]);
+    const service = new CommandService([loader]);
+    await service.reloadCommands();
+
+    expect(service.getCommands()).toHaveLength(1);
+    expect(service.getCommands()[0]).toEqual(mockCommandA);
+
+    // Update loader mock to return different commands
+    loader.loadCommands = vi.fn(async () => [mockCommandB]);
+
+    await service.reloadCommands();
+
+    expect(service.getCommands()).toHaveLength(1);
+    expect(service.getCommands()[0]).toEqual(mockCommandB);
+  });
+
+  it('should notify subscribers when commands change', async () => {
+    const loader = new MockCommandLoader([mockCommandA]);
+    const service = new CommandService([loader]);
+    const listener = vi.fn();
+
+    service.subscribe(listener);
+
+    await service.reloadCommands();
+
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
 });

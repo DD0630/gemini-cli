@@ -7,10 +7,16 @@
 import type { EventEmitter } from 'node:events';
 import type { Config, GeminiCLIExtension } from '../config/config.js';
 import { refreshServerHierarchicalMemory } from './memoryDiscovery.js';
+import { debugLogger } from './debugLogger.js';
+
+export interface CommandRegistry {
+  reloadCommands(): Promise<void>;
+}
 
 export abstract class ExtensionLoader {
   // Assigned in `start`.
   protected config: Config | undefined;
+  protected commandRegistry: CommandRegistry | undefined;
 
   // Used to track the count of currently starting and stopping extensions and
   // fire appropriate events.
@@ -23,6 +29,10 @@ export abstract class ExtensionLoader {
   private isStarting: boolean = false;
 
   constructor(private readonly eventEmitter?: EventEmitter<ExtensionEvents>) {}
+
+  setCommandRegistry(registry: CommandRegistry) {
+    this.commandRegistry = registry;
+  }
 
   /**
    * All currently known extensions, both active and inactive.
@@ -79,9 +89,12 @@ export abstract class ExtensionLoader {
       // loading/unloading to reduce churn, see the `maybeRefreshMemories` call
       // below.
 
-      // TODO: Update custom command updating away from the event based system
-      // and call directly into a custom command manager here. See the
-      // useSlashCommandProcessor hook which responds to events fired here today.
+      if (this.commandRegistry) {
+        // Reload commands, but don't block the extension startup process if it fails.
+        this.commandRegistry.reloadCommands().catch((e) => {
+          debugLogger.debug('Failed to reload commands during extension start', e);
+        });
+      }
     } finally {
       this.startCompletedCount++;
       this.eventEmitter?.emit('extensionsStarting', {
@@ -170,9 +183,12 @@ export abstract class ExtensionLoader {
       // loading/unloading to reduce churn, see the `maybeRefreshMemories` call
       // below.
 
-      // TODO: Update custom command updating away from the event based system
-      // and call directly into a custom command manager here. See the
-      // useSlashCommandProcessor hook which responds to events fired here today.
+      if (this.commandRegistry) {
+        // Reload commands, but don't block the extension stopping process if it fails.
+        this.commandRegistry.reloadCommands().catch((e) => {
+          debugLogger.debug('Failed to reload commands during extension stop', e);
+        });
+      }
     } finally {
       this.stopCompletedCount++;
       this.eventEmitter?.emit('extensionsStopping', {
