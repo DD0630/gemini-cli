@@ -867,6 +867,20 @@ export class CoreToolScheduler {
               }
             : undefined;
 
+        const setPidCallback = (pid: number) => {
+          this.toolCalls = this.toolCalls.map((tc) =>
+            tc.request.callId === callId && tc.status === 'executing'
+              ? { ...tc, pid }
+              : tc,
+          );
+          this.notifyToolCallsUpdate();
+        };
+
+        const callbacks = {
+          onLiveOutput: liveOutputCallback,
+          onPid: setPidCallback,
+        };
+
         const shellExecutionConfig = this.config.getShellExecutionConfig();
         const hooksEnabled = this.config.getEnableHooks();
         const messageBus = this.config.getMessageBus();
@@ -880,43 +894,16 @@ export class CoreToolScheduler {
             spanMetadata.input = {
               request: toolCall.request,
             };
-            // TODO: Refactor to remove special casing for ShellToolInvocation.
-            // Introduce a generic callbacks object for the execute method to handle
-            // things like `onPid` and `onLiveOutput`. This will make the scheduler
-            // agnostic to the invocation type.
-            let promise: Promise<ToolResult>;
-            if (invocation instanceof ShellToolInvocation) {
-              const setPidCallback = (pid: number) => {
-                this.toolCalls = this.toolCalls.map((tc) =>
-                  tc.request.callId === callId && tc.status === 'executing'
-                    ? { ...tc, pid }
-                    : tc,
-                );
-                this.notifyToolCallsUpdate();
-              };
-              promise = executeToolWithHooks(
-                invocation,
-                toolName,
-                signal,
-                messageBus,
-                hooksEnabled,
-                toolCall.tool,
-                liveOutputCallback,
-                shellExecutionConfig,
-                setPidCallback,
-              );
-            } else {
-              promise = executeToolWithHooks(
-                invocation,
-                toolName,
-                signal,
-                messageBus,
-                hooksEnabled,
-                toolCall.tool,
-                liveOutputCallback,
-                shellExecutionConfig,
-              );
-            }
+            const promise = executeToolWithHooks(
+              invocation,
+              toolName,
+              signal,
+              messageBus,
+              hooksEnabled,
+              toolCall.tool,
+              callbacks,
+              shellExecutionConfig,
+            );
 
             try {
               const toolResult: ToolResult = await promise;

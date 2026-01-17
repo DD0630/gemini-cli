@@ -16,6 +16,7 @@ import type {
   ToolResult,
   ToolCallConfirmationDetails,
   ToolExecuteConfirmationDetails,
+  ToolExecutionCallbacks,
 } from './tools.js';
 import {
   BaseDeclarativeTool,
@@ -143,9 +144,8 @@ export class ShellToolInvocation extends BaseToolInvocation<
 
   async execute(
     signal: AbortSignal,
-    updateOutput?: (output: string | AnsiOutput) => void,
+    callbacks?: ToolExecutionCallbacks,
     shellExecutionConfig?: ShellExecutionConfig,
-    setPidCallback?: (pid: number) => void,
   ): Promise<ToolResult> {
     const strippedCommand = stripShellWrapper(this.params.command);
 
@@ -214,7 +214,7 @@ export class ShellToolInvocation extends BaseToolInvocation<
           cwd,
           (event: ShellOutputEvent) => {
             resetTimeout(); // Reset timeout on any event
-            if (!updateOutput) {
+            if (!callbacks?.onLiveOutput) {
               return;
             }
 
@@ -247,7 +247,7 @@ export class ShellToolInvocation extends BaseToolInvocation<
             }
 
             if (shouldUpdate) {
-              updateOutput(cumulativeOutput);
+              callbacks.onLiveOutput(cumulativeOutput);
               lastUpdateTime = Date.now();
             }
           },
@@ -262,8 +262,8 @@ export class ShellToolInvocation extends BaseToolInvocation<
           },
         );
 
-      if (pid && setPidCallback) {
-        setPidCallback(pid);
+      if (pid && callbacks?.onPid) {
+        callbacks.onPid(pid);
       }
 
       const result = await resultPromise;

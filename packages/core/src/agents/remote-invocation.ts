@@ -8,6 +8,7 @@ import {
   BaseToolInvocation,
   type ToolResult,
   type ToolCallConfirmationDetails,
+  type ToolExecutionCallbacks,
 } from '../tools/tools.js';
 import type { AgentInputs, RemoteAgentDefinition } from './types.js';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
@@ -41,7 +42,10 @@ export class RemoteAgentInvocation extends BaseToolInvocation<
     return false;
   }
 
-  async execute(_signal: AbortSignal): Promise<ToolResult> {
+  async execute(
+    _signal: AbortSignal,
+    _callbacks?: ToolExecutionCallbacks,
+  ): Promise<ToolResult> {
     // TODO: Implement remote agent invocation logic.
     throw new Error(`Remote agent invocation not implemented.`);
   }
