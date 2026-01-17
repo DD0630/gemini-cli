@@ -23,8 +23,12 @@ export class CommandService {
   /**
    * Private constructor to enforce the use of the async factory.
    * @param commands A readonly array of the fully loaded and de-duplicated commands.
+   * @param rootCommandMap A pre-computed lookup map for top-level commands.
    */
-  private constructor(private readonly commands: readonly SlashCommand[]) {}
+  private constructor(
+    private readonly commands: readonly SlashCommand[],
+    private readonly rootCommandMap: Map<string, SlashCommand>,
+  ) {}
 
   /**
    * Asynchronously creates and initializes a new CommandService instance.
@@ -86,8 +90,46 @@ export class CommandService {
       });
     }
 
-    const finalCommands = Object.freeze(Array.from(commandMap.values()));
-    return new CommandService(finalCommands);
+    const commandsForProcessing = Array.from(commandMap.values());
+    const rootMap = this.buildLookupMap(commandsForProcessing);
+
+    const finalCommands = Object.freeze(commandsForProcessing);
+    return new CommandService(finalCommands, rootMap);
+  }
+
+  /**
+   * Recursively builds a lookup map for commands and their subcommands.
+   * Modifies the commands (specifically creates copies of subcommands) to attach `commandMap`.
+   *
+   * @param commands The list of commands to process.
+   * @returns A map keyed by command name and aliases.
+   */
+  private static buildLookupMap(
+    commands: SlashCommand[],
+  ): Map<string, SlashCommand> {
+    const map = new Map<string, SlashCommand>();
+
+    for (const cmd of commands) {
+      // Handle subCommands recursively.
+      if (cmd.subCommands) {
+        // Clone the subCommands array and objects to avoid mutating shared state
+        // from the loaders.
+        const newSubCommands = cmd.subCommands.map((sc) => ({ ...sc }));
+        cmd.subCommands = newSubCommands;
+
+        // Recursively build map for subcommands
+        cmd.commandMap = this.buildLookupMap(newSubCommands);
+      }
+
+      map.set(cmd.name, cmd);
+      if (cmd.altNames) {
+        for (const alias of cmd.altNames) {
+          map.set(alias, cmd);
+        }
+      }
+    }
+
+    return map;
   }
 
   /**
@@ -100,5 +142,15 @@ export class CommandService {
    */
   getCommands(): readonly SlashCommand[] {
     return this.commands;
+  }
+
+  /**
+   * Retrieves the pre-computed lookup map for top-level slash commands.
+   * The map includes entries for both primary names and aliases.
+   *
+   * @returns A map of command names/aliases to SlashCommand objects.
+   */
+  getCommandMap(): Map<string, SlashCommand> {
+    return this.rootCommandMap;
   }
 }

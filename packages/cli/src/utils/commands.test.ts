@@ -137,4 +137,43 @@ describe('parseSlashCommand', () => {
     expect(result.args).toBe('');
     expect(result.canonicalPath).toEqual([]);
   });
+
+  it('should use a Map for lookup if provided', () => {
+    const map = new Map<string, SlashCommand>();
+    mockCommands.forEach((cmd) => {
+      map.set(cmd.name, cmd);
+      cmd.altNames?.forEach((alias) => map.set(alias, cmd));
+    });
+
+    const result = parseSlashCommand('/memory add', map);
+    expect(result.commandToExecute?.name).toBe('add');
+    expect(result.canonicalPath).toEqual(['memory', 'add']);
+  });
+
+  it('should use commandMap on a command for recursive lookup', () => {
+    // Create a command with commandMap
+    const subCommand: SlashCommand = {
+      name: 'sub',
+      description: 'Sub command',
+      action: async () => {},
+      kind: CommandKind.BUILT_IN,
+    };
+    const subMap = new Map<string, SlashCommand>();
+    subMap.set('sub', subCommand);
+
+    const rootCommand: SlashCommand = {
+      name: 'root',
+      description: 'Root command',
+      kind: CommandKind.BUILT_IN,
+      commandMap: subMap,
+      // Intentionally leave subCommands empty or undefined to prove commandMap is used
+    };
+
+    const rootMap = new Map<string, SlashCommand>();
+    rootMap.set('root', rootCommand);
+
+    const result = parseSlashCommand('/root sub', rootMap);
+    expect(result.commandToExecute?.name).toBe('sub');
+    expect(result.canonicalPath).toEqual(['root', 'sub']);
+  });
 });

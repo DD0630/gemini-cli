@@ -207,4 +207,10 @@ export interface SlashCommand {
   showCompletionLoading?: boolean;
 
   subCommands?: SlashCommand[];
+
+  /**
+   * A pre-computed lookup map for sub-commands, keyed by name and aliases.
+   * Populated by CommandService for performance.
+   */
+  commandMap?: Map<string, SlashCommand>;
 }
