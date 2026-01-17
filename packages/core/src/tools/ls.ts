@@ -190,29 +190,38 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
             DEFAULT_FILE_FILTERING_OPTIONS.respectGeminiIgnore,
         });
 
-      const entries = [];
-      for (const relativePath of filteredPaths) {
-        const fullPath = path.resolve(this.config.getTargetDir(), relativePath);
+      const entries = (
+        await Promise.all(
+          filteredPaths.map(async (relativePath) => {
+            const fullPath = path.resolve(
+              this.config.getTargetDir(),
+              relativePath,
+            );
 
-        if (this.shouldIgnore(path.basename(fullPath), this.params.ignore)) {
-          continue;
-        }
+            if (
+              this.shouldIgnore(path.basename(fullPath), this.params.ignore)
+            ) {
+              return null;
+            }
 
-        try {
-          const stats = await fs.stat(fullPath);
-          const isDir = stats.isDirectory();
-          entries.push({
-            name: path.basename(fullPath),
-            path: fullPath,
-            isDirectory: isDir,
-            size: isDir ? 0 : stats.size,
-            modifiedTime: stats.mtime,
-          });
-        } catch (error) {
-          // Log error internally but don't fail the whole listing
-          debugLogger.debug(`Error accessing ${fullPath}: ${error}`);
-        }
-      }
+            try {
+              const stats = await fs.stat(fullPath);
+              const isDir = stats.isDirectory();
+              return {
+                name: path.basename(fullPath),
+                path: fullPath,
+                isDirectory: isDir,
+                size: isDir ? 0 : stats.size,
+                modifiedTime: stats.mtime,
+              };
+            } catch (error) {
+              // Log error internally but don't fail the whole listing
+              debugLogger.debug(`Error accessing ${fullPath}: ${error}`);
+              return null;
+            }
+          }),
+        )
+      ).filter((entry): entry is FileEntry => entry !== null);
 
       // Sort entries (directories first, then alphabetically)
       entries.sort((a, b) => {
