@@ -78,7 +78,7 @@ describe('memoryCommand', () => {
       mockGetUserMemory.mockReturnValue('');
       mockGetGeminiMdFileCount.mockReturnValue(0);
 
-      await showCommand.action(mockContext, '');
+      await showCommand.action(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
@@ -97,7 +97,7 @@ describe('memoryCommand', () => {
       mockGetUserMemory.mockReturnValue(memoryContent);
       mockGetGeminiMdFileCount.mockReturnValue(1);
 
-      await showCommand.action(mockContext, '');
+      await showCommand.action(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
@@ -120,7 +120,8 @@ describe('memoryCommand', () => {
     it('should return an error message if no arguments are provided', () => {
       if (!addCommand.action) throw new Error('Command has no action');
 
-      const result = addCommand.action(mockContext, '  ');
+      mockContext.invocation!.args = '  ';
+      const result = addCommand.action(mockContext);
       expect(result).toEqual({
         type: 'message',
         messageType: 'error',
@@ -134,7 +135,8 @@ describe('memoryCommand', () => {
       if (!addCommand.action) throw new Error('Command has no action');
 
       const fact = 'remember this';
-      const result = addCommand.action(mockContext, `  ${fact}  `);
+      mockContext.invocation!.args = `  ${fact}  `;
+      const result = addCommand.action(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
@@ -222,7 +224,7 @@ describe('memoryCommand', () => {
       vi.mocked(config.getUserMemory).mockReturnValue('JIT Memory Content');
       vi.mocked(config.getGeminiMdFileCount).mockReturnValue(3);
 
-      await refreshCommand.action(mockContext, '');
+      await refreshCommand.action(mockContext);
 
       expect(mockContextManagerRefresh).toHaveBeenCalledOnce();
       expect(mockRefreshServerHierarchicalMemory).not.toHaveBeenCalled();
@@ -246,7 +248,7 @@ describe('memoryCommand', () => {
       };
       mockRefreshServerHierarchicalMemory.mockResolvedValue(refreshResult);
 
-      await refreshCommand.action(mockContext, '');
+      await refreshCommand.action(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
@@ -273,7 +275,7 @@ describe('memoryCommand', () => {
       const refreshResult = { memoryContent: '', fileCount: 0, filePaths: [] };
       mockRefreshServerHierarchicalMemory.mockResolvedValue(refreshResult);
 
-      await refreshCommand.action(mockContext, '');
+      await refreshCommand.action(mockContext);
 
       expect(mockRefreshServerHierarchicalMemory).toHaveBeenCalledOnce();
 
@@ -292,7 +294,7 @@ describe('memoryCommand', () => {
       const error = new Error('Failed to read memory files.');
       mockRefreshServerHierarchicalMemory.mockRejectedValue(error);
 
-      await refreshCommand.action(mockContext, '');
+      await refreshCommand.action(mockContext);
 
       expect(mockRefreshServerHierarchicalMemory).toHaveBeenCalledOnce();
       expect(mockSetUserMemory).not.toHaveBeenCalled();
@@ -318,7 +320,7 @@ describe('memoryCommand', () => {
       });
 
       await expect(
-        refreshCommand.action(nullConfigContext, ''),
+        refreshCommand.action(nullConfigContext),
       ).resolves.toBeUndefined();
 
       expect(nullConfigContext.ui.addItem).toHaveBeenCalledWith(
@@ -354,7 +356,7 @@ describe('memoryCommand', () => {
 
       mockGetGeminiMdfilePaths.mockReturnValue([]);
 
-      await listCommand.action(mockContext, '');
+      await listCommand.action(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
@@ -371,7 +373,7 @@ describe('memoryCommand', () => {
       const filePaths = ['/path/one/GEMINI.md', '/path/two/GEMINI.md'];
       mockGetGeminiMdfilePaths.mockReturnValue(filePaths);
 
-      await listCommand.action(mockContext, '');
+      await listCommand.action(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {

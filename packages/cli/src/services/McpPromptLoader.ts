@@ -81,10 +81,8 @@ export class McpPromptLoader implements ICommandLoader {
               },
             },
           ],
-          action: async (
-            context: CommandContext,
-            args: string,
-          ): Promise<SlashCommandActionReturn> => {
+          action: async (context: CommandContext): Promise<SlashCommandActionReturn>  => {
+    const args = context.invocation?.args || '';
             if (!this.config) {
               return {
                 type: 'message',

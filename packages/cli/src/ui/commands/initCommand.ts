@@ -19,10 +19,8 @@ export const initCommand: SlashCommand = {
   description: 'Analyzes the project and creates a tailored GEMINI.md file',
   kind: CommandKind.BUILT_IN,
   autoExecute: true,
-  action: async (
-    context: CommandContext,
-    _args: string,
-  ): Promise<SlashCommandActionReturn> => {
+  action: async (context: CommandContext): Promise<SlashCommandActionReturn>  => {
+    const _args = context.invocation?.args || '';
     if (!context.services.config) {
       return {
         type: 'message',

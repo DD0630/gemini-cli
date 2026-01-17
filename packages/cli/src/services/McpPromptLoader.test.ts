@@ -213,8 +213,10 @@ describe('McpPromptLoader', () => {
       const loader = new McpPromptLoader(mockConfigWithPrompts);
       const commands = await loader.loadCommands(new AbortController().signal);
       const action = commands[0].action!;
-      const context = {} as CommandContext;
-      const result = await action(context, 'test-name 123 tiger');
+      const context = {
+        invocation: { args: 'test-name 123 tiger' },
+      } as unknown as CommandContext;
+      const result = await action(context);
       expect(mockPrompt.invoke).toHaveBeenCalledWith({
         name: 'test-name',
         age: '123',
@@ -230,8 +232,10 @@ describe('McpPromptLoader', () => {
       const loader = new McpPromptLoader(mockConfigWithPrompts);
       const commands = await loader.loadCommands(new AbortController().signal);
       const action = commands[0].action!;
-      const context = {} as CommandContext;
-      const result = await action(context, 'test-name');
+      const context = {
+        invocation: { args: 'test-name' },
+      } as unknown as CommandContext;
+      const result = await action(context);
       expect(result).toEqual({
         type: 'message',
         messageType: 'error',
@@ -246,8 +250,10 @@ describe('McpPromptLoader', () => {
       const loader = new McpPromptLoader(mockConfigWithPrompts);
       const commands = await loader.loadCommands(new AbortController().signal);
       const action = commands[0].action!;
-      const context = {} as CommandContext;
-      const result = await action(context, 'test-name 123 tiger');
+      const context = {
+        invocation: { args: 'test-name 123 tiger' },
+      } as unknown as CommandContext;
+      const result = await action(context);
       expect(result).toEqual({
         type: 'message',
         messageType: 'error',

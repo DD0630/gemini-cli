@@ -112,7 +112,7 @@ describe('chatCommand', () => {
         return { mtime: date2 } as Stats;
       });
 
-      await listCommand?.action?.(mockContext, '');
+      await listCommand?.action?.(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
@@ -237,7 +237,7 @@ describe('chatCommand', () => {
     });
 
     it('should return an error if tag is missing', async () => {
-      const result = await resumeCommand?.action?.(mockContext, '');
+      const result = await resumeCommand?.action?.(mockContext);
 
       expect(result).toEqual({
         type: 'message',
@@ -443,7 +443,7 @@ describe('chatCommand', () => {
     });
 
     it('should default to a json file if no path is provided', async () => {
-      const result = await shareCommand?.action?.(mockContext, '');
+      const result = await shareCommand?.action?.(mockContext);
       const expectedPath = path.join(
         process.cwd(),
         'gemini-conversation-1234567890.json',

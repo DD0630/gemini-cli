@@ -104,7 +104,8 @@ export const directoryCommand: SlashCommand = {
 
         return suggestions.map((s) => leadingWhitespace + s);
       },
-      action: async (context: CommandContext, args: string) => {
+      action: async (context: CommandContext) => {
+    const args = context.invocation?.args || '';
         const {
           ui: { addItem },
           services: { config, settings },

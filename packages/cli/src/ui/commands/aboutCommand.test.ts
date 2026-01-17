@@ -85,7 +85,7 @@ describe('aboutCommand', () => {
       throw new Error('The about command must have an action.');
     }
 
-    await aboutCommand.action(mockContext, '');
+    await aboutCommand.action(mockContext);
 
     expect(mockContext.ui.addItem).toHaveBeenCalledWith(
       {
@@ -109,7 +109,7 @@ describe('aboutCommand', () => {
       throw new Error('The about command must have an action.');
     }
 
-    await aboutCommand.action(mockContext, '');
+    await aboutCommand.action(mockContext);
 
     expect(mockContext.ui.addItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -126,7 +126,7 @@ describe('aboutCommand', () => {
       throw new Error('The about command must have an action.');
     }
 
-    await aboutCommand.action(mockContext, '');
+    await aboutCommand.action(mockContext);
 
     expect(mockContext.ui.addItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -146,7 +146,7 @@ describe('aboutCommand', () => {
       throw new Error('The about command must have an action.');
     }
 
-    await aboutCommand.action(mockContext, '');
+    await aboutCommand.action(mockContext);
 
     expect(mockContext.ui.addItem).toHaveBeenCalledWith(
       expect.objectContaining({

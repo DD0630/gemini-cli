@@ -61,7 +61,8 @@ async function listAction(context: CommandContext) {
   context.ui.addItem(historyItem, Date.now());
 }
 
-function updateAction(context: CommandContext, args: string): Promise<void> {
+function updateAction(context: CommandContext): Promise<void> {
+  const args = context.invocation?.args || '';
   const updateArgs = args.split(' ').filter((value) => value.length > 0);
   const all = updateArgs.length === 1 && updateArgs[0] === '--all';
   const names = all ? null : updateArgs;
@@ -157,8 +158,8 @@ function updateAction(context: CommandContext, args: string): Promise<void> {
 
 async function restartAction(
   context: CommandContext,
-  args: string,
 ): Promise<void> {
+  const args = context.invocation?.args || '';
   const extensionLoader = context.services.config?.getExtensionLoader();
   if (!extensionLoader) {
     context.ui.addItem(
@@ -398,7 +399,8 @@ function getEnableDisableContext(
   };
 }
 
-async function disableAction(context: CommandContext, args: string) {
+async function disableAction(context: CommandContext) {
+  const args = context.invocation?.args || '';
   const enableContext = getEnableDisableContext(context, args);
   if (!enableContext) return;
 
@@ -415,7 +417,8 @@ async function disableAction(context: CommandContext, args: string) {
   }
 }
 
-async function enableAction(context: CommandContext, args: string) {
+async function enableAction(context: CommandContext) {
+  const args = context.invocation?.args || '';
   const enableContext = getEnableDisableContext(context, args);
   if (!enableContext) return;
 
@@ -432,7 +435,8 @@ async function enableAction(context: CommandContext, args: string) {
   }
 }
 
-async function installAction(context: CommandContext, args: string) {
+async function installAction(context: CommandContext) {
+  const args = context.invocation?.args || '';
   const extensionLoader = context.services.config?.getExtensionLoader();
   if (!(extensionLoader instanceof ExtensionManager)) {
     debugLogger.error(
@@ -510,7 +514,8 @@ async function installAction(context: CommandContext, args: string) {
   }
 }
 
-async function uninstallAction(context: CommandContext, args: string) {
+async function uninstallAction(context: CommandContext) {
+  const args = context.invocation?.args || '';
   const extensionLoader = context.services.config?.getExtensionLoader();
   if (!(extensionLoader instanceof ExtensionManager)) {
     debugLogger.error(
@@ -689,8 +694,8 @@ export function extensionsCommand(
       restartCommand,
       ...conditionalCommands,
     ],
-    action: (context, args) =>
+    action: (context) =>
       // Default to list if no subcommand is provided
-      listExtensionsCommand.action!(context, args),
+      listExtensionsCommand.action!(context),
   };
 }

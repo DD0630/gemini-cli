@@ -140,7 +140,7 @@ describe('extensionsCommand', () => {
     it('should add an EXTENSIONS_LIST item to the UI', async () => {
       const command = extensionsCommand();
       if (!command.action) throw new Error('Action not defined');
-      await command.action(mockContext, '');
+      await command.action(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
@@ -155,7 +155,7 @@ describe('extensionsCommand', () => {
       mockGetExtensions.mockReturnValue([]);
       const command = extensionsCommand();
       if (!command.action) throw new Error('Action not defined');
-      await command.action(mockContext, '');
+      await command.action(mockContext);
 
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
