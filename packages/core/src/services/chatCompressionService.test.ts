@@ -136,6 +136,8 @@ describe('ChatCompressionService', () => {
     mockChat = {
       getHistory: vi.fn(),
       getLastPromptTokenCount: vi.fn().mockReturnValue(500),
+      getSystemInstruction: vi.fn().mockReturnValue(''),
+      getTools: vi.fn().mockReturnValue([]),
     } as unknown as GeminiChat;
 
     const mockGenerateContent = vi.fn().mockResolvedValue({

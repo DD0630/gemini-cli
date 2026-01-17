@@ -7,6 +7,7 @@
 import { expect, describe, it, beforeEach, afterEach } from 'vitest';
 import { TestRig } from './test-helper.js';
 import { join } from 'node:path';
+import process from 'node:process';
 
 describe('Interactive Mode', () => {
   let rig: TestRig;
@@ -49,12 +50,9 @@ describe('Interactive Mode', () => {
     );
 
     await run.expectText('Chat history compressed', 5000);
-  });
+  }, 60000);
 
-  // TODO: Context compression is broken and doesn't include the system
-  // instructions or tool counts, so it thinks compression is beneficial when
-  // it is in fact not.
-  it.skip('should handle compression failure on token inflation', async () => {
+  it('should handle compression failure on token inflation', async () => {
     await rig.setup('interactive-compress-failure', {
       fakeResponsesPath: join(
         import.meta.dirname,
@@ -62,27 +60,39 @@ describe('Interactive Mode', () => {
       ),
     });
 
-    const run = await rig.runInteractive();
+    // Create a large system prompt to ensure that when we recalculate the token
+    // count locally including the system prompt, it exceeds the original count
+    // (which comes from the fake response usage metadata and is fixed at 12270).
+    // 60000 chars is roughly 15000 tokens (4 chars/token), which > 12270.
+    const largeSystemPromptPath = rig.createFile('system.md', 'A'.repeat(60000));
+    process.env['GEMINI_SYSTEM_MD'] = largeSystemPromptPath;
 
-    await run.type('Respond with exactly "Hello" followed by a period');
-    await run.type('\r');
+    let run;
+    try {
+      run = await rig.runInteractive();
 
-    await run.expectText('Hello.', 25000);
+      await run.type('Respond with exactly "Hello" followed by a period');
+      await run.type('\r');
 
-    await run.type('/compress');
-    await run.type('\r');
-    await run.expectText('compression was not beneficial', 25000);
+      await run.expectText('Hello.', 25000);
 
-    // Verify no telemetry event is logged for NOOP
-    const foundEvent = await rig.waitForTelemetryEvent(
-      'chat_compression',
-      5000,
-    );
-    expect(
-      foundEvent,
-      'chat_compression telemetry event should be found for failures',
-    ).toBe(true);
-  });
+      await run.type('/compress');
+      await run.type('\r');
+      await run.expectText('compression was not beneficial', 25000);
+
+      // Verify no telemetry event is logged for NOOP
+      const foundEvent = await rig.waitForTelemetryEvent(
+        'chat_compression',
+        5000,
+      );
+      expect(
+        foundEvent,
+        'chat_compression telemetry event should be found for failures',
+      ).toBe(true);
+    } finally {
+      delete process.env['GEMINI_SYSTEM_MD'];
+    }
+  }, 60000);
 
   it('should handle /compress command on empty history', async () => {
     rig.setup('interactive-compress-empty', {
@@ -107,5 +117,5 @@ describe('Interactive Mode', () => {
       foundEvent,
       'chat_compression telemetry event should not be found for NOOP',
     ).toBe(false);
-  });
+  }, 60000);
 });

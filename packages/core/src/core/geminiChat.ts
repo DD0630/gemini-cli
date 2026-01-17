@@ -230,6 +230,10 @@ export class GeminiChat {
     this.systemInstruction = sysInstr;
   }
 
+  getSystemInstruction(): string {
+    return this.systemInstruction;
+  }
+
   /**
    * Sends a message to the model and returns the response in chunks.
    *
@@ -666,6 +670,10 @@ export class GeminiChat {
 
   setTools(tools: Tool[]): void {
     this.tools = tools;
+  }
+
+  getTools(): Tool[] {
+    return this.tools;
   }
 
   async maybeIncludeSchemaDepthContext(error: StructuredError): Promise<void> {
