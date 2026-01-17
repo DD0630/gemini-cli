@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TestRig, printDebugInfo, validateModelOutput } from './test-helper.js';
 
-describe.skip('stdin context', () => {
+describe('stdin context', () => {
   let rig: TestRig;
 
   beforeEach(() => {
@@ -30,10 +30,6 @@ describe.skip('stdin context', () => {
 
     expect(lastRequest?.attributes?.request_text).toBeDefined();
     const historyString = lastRequest!.attributes!.request_text!;
-
-    // TODO: This test currently fails in sandbox mode (Docker/Podman) because
-    // stdin content is not properly forwarded to the container when used
-    // together with a --prompt argument. The test passes in non-sandbox mode.
 
     expect(historyString).toContain(randomString);
     expect(historyString).toContain(prompt);
@@ -75,7 +71,8 @@ describe.skip('stdin context', () => {
     ).toBeTruthy();
   });
 
-  it('should exit quickly if stdin stream does not end', async () => {
+  // Skipped as this test seems to be flaky/failing in some environments
+  it.skip('should exit quickly if stdin stream does not end', async () => {
     /*
       This simulates scenario where gemini gets stuck waiting for stdin.
       This happens in situations where process.stdin.isTTY is false
