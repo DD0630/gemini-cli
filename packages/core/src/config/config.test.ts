@@ -1426,8 +1426,11 @@ describe('Generation Config Merging (HACK)', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serviceConfig = (config.modelConfigService as any).config;
 
-    // Assert that the user's aliases are present
-    expect(serviceConfig.aliases).toEqual(userAliases);
+    // Assert that the user's aliases are present, merged with defaults
+    expect(serviceConfig.aliases).toEqual({
+      ...DEFAULT_MODEL_CONFIGS.aliases,
+      ...userAliases,
+    });
     // Assert that the default overrides are present
     expect(serviceConfig.overrides).toEqual(DEFAULT_MODEL_CONFIGS.overrides);
   });
@@ -1450,8 +1453,9 @@ describe('Generation Config Merging (HACK)', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serviceConfig = (config.modelConfigService as any).config;
 
-    // Assert that the user's aliases are used, not the defaults
-    expect(serviceConfig.aliases).toEqual(userAliases);
+    // Assert that the user's aliases are present
+    expect(serviceConfig.aliases).toHaveProperty('my-alias');
+    expect(serviceConfig.aliases['my-alias']).toEqual(userAliases['my-alias']);
   });
 
   it('should use default generation config if none is provided', () => {

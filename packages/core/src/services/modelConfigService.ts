@@ -5,6 +5,7 @@
  */
 
 import type { GenerateContentConfig } from '@google/genai';
+import { deepMerge } from '../utils/merge.js';
 
 // The primary key for the ModelConfig is the model string. However, we also
 // support a secondary key to limit the override scope, typically an agent name.
@@ -99,10 +100,10 @@ export class ModelConfigService {
     return {
       modelConfig: {
         model: alias.modelConfig.model ?? baseAlias.modelConfig.model,
-        generateContentConfig: this.deepMerge(
-          baseAlias.modelConfig.generateContentConfig,
-          alias.modelConfig.generateContentConfig,
-        ),
+        generateContentConfig: deepMerge(
+          baseAlias.modelConfig.generateContentConfig as Record<string, unknown>,
+          alias.modelConfig.generateContentConfig as Record<string, unknown>,
+        ) as GenerateContentConfig,
       },
     };
   }
@@ -131,10 +132,10 @@ export class ModelConfigService {
     if (allAliases[context.model]) {
       const resolvedAlias = this.resolveAlias(context.model, allAliases);
       baseModel = resolvedAlias.modelConfig.model; // This can now be undefined
-      resolvedConfig = this.deepMerge(
-        resolvedConfig,
-        resolvedAlias.modelConfig.generateContentConfig,
-      );
+      resolvedConfig = deepMerge(
+        resolvedConfig as Record<string, unknown>,
+        resolvedAlias.modelConfig.generateContentConfig as Record<string, unknown>,
+      ) as GenerateContentConfig;
     }
 
     // If an alias was used but didn't resolve to a model, `baseModel` is undefined.
@@ -198,10 +199,10 @@ export class ModelConfigService {
         baseModel = match.modelConfig.model;
       }
       if (match.modelConfig.generateContentConfig) {
-        resolvedConfig = this.deepMerge(
-          resolvedConfig,
-          match.modelConfig.generateContentConfig,
-        );
+        resolvedConfig = deepMerge(
+          resolvedConfig as Record<string, unknown>,
+          match.modelConfig.generateContentConfig as Record<string, unknown>,
+        ) as GenerateContentConfig;
       }
     }
 
@@ -224,47 +225,5 @@ export class ModelConfigService {
       model: resolved.model,
       generateContentConfig: resolved.generateContentConfig,
     } as ResolvedModelConfig;
-  }
-
-  private isObject(item: unknown): item is Record<string, unknown> {
-    return !!item && typeof item === 'object' && !Array.isArray(item);
-  }
-
-  private deepMerge(
-    config1: GenerateContentConfig | undefined,
-    config2: GenerateContentConfig | undefined,
-  ): Record<string, unknown> {
-    return this.genericDeepMerge(
-      config1 as Record<string, unknown> | undefined,
-      config2 as Record<string, unknown> | undefined,
-    );
-  }
-
-  private genericDeepMerge(
-    ...objects: Array<Record<string, unknown> | undefined>
-  ): Record<string, unknown> {
-    return objects.reduce((acc: Record<string, unknown>, obj) => {
-      if (!obj) {
-        return acc;
-      }
-
-      Object.keys(obj).forEach((key) => {
-        const accValue = acc[key];
-        const objValue = obj[key];
-
-        // For now, we only deep merge objects, and not arrays. This is because
-        // If we deep merge arrays, there is no way for the user to completely
-        // override the base array.
-        // TODO(joshualitt): Consider knobs here, i.e. opt-in to deep merging
-        // arrays on a case-by-case basis.
-        if (this.isObject(accValue) && this.isObject(objValue)) {
-          acc[key] = this.deepMerge(accValue, objValue);
-        } else {
-          acc[key] = objValue;
-        }
-      });
-
-      return acc;
-    }, {});
   }
 }
